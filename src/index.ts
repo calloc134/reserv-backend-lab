@@ -212,6 +212,59 @@ app.get('/rooms/', async (ctx) => {
 	return ctx.json(response);
 });
 
+// 特定の時間・時限に利用できる部屋を取得
+app.get(
+	'/rooms/available/date/:date/slot/:slot/',
+	vValidator(
+		'param',
+		object({
+			date: string(),
+			slot: string(),
+		}),
+		(result, ctx) => {
+			if (!result.success) {
+				return ctx.json({ message: 'Invalid request' }, 400);
+			}
+		}
+	),
+
+	async (ctx) => {
+		const pool = ctx.get('pool');
+
+		const { date: raw_date, slot: raw_slot } = ctx.req.valid('param');
+
+		const date_result = convertToDate(raw_date);
+
+		if (date_result.isErr()) {
+			return ctx.json({ message: 'Invalid date' }, 400);
+		}
+
+		const slot_result = newSlotValue(raw_slot as slot);
+
+		if (slot_result.isErr()) {
+			return ctx.json({ message: 'Invalid slot' }, 400);
+		}
+
+		const date = date_result.value;
+
+		// 特定の時間・時限で予約・利用禁止になっていない部屋を取得
+		const result = await pool.query<{ room_uuid: string; name: string }>(sql`
+			SELECT room_uuid, name FROM room WHERE room_uuid NOT IN (
+				SELECT room_uuid FROM reservation_or_disabled WHERE date = ${date} AND slot = ${slot_result.value.slot}::slot 
+			) ORDER BY room_uuid;
+		`);
+
+		const response: RoomResponse[] = result.rows.map((row) => {
+			return {
+				room_uuid: row.room_uuid,
+				name: row.name,
+			};
+		});
+
+		return ctx.json(response);
+	}
+);
+
 app.patch(
 	'/rooms/',
 	vValidator(
