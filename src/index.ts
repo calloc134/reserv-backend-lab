@@ -185,7 +185,7 @@ type ReservationResponse = {
 	} | null;
 	room_uuid: string;
 	slot: slot;
-	date: Date;
+	date: string;
 };
 
 app.get('/', (ctx) => {
@@ -401,7 +401,7 @@ app.get(
 				reservation_uuid: reservation_uuid_result.value.uuid,
 				room_uuid: room_uuid_result.value.uuid,
 				slot: slot_result.value.slot,
-				date,
+				date: convertFromDate(date),
 				user: row.user_id === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
 			});
 		}
@@ -508,7 +508,7 @@ app.get(
 				reservation_uuid: reservation_uuid_result.value.uuid,
 				room_uuid: room_uuid_result.value.uuid,
 				slot: slot_result.value.slot,
-				date,
+				date: convertFromDate(date),
 				user: user === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
 			});
 		}
@@ -609,7 +609,7 @@ app.get(
 				reservation_uuid: reservation_uuid_result.value.uuid,
 				room_uuid: room_uuid_result.value.uuid,
 				slot: slot_result.value.slot,
-				date,
+				date: convertFromDate(date),
 				user: user === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
 			});
 		}
@@ -717,7 +717,7 @@ app.get(
 				reservation_uuid: reservation_uuid_result.value.uuid,
 				room_uuid: room_uuid_result.value.uuid,
 				slot: slot_result.value.slot,
-				date,
+				date: convertFromDate(date),
 				user: { user_id: user.id, name: `${user.firstName} ${user.lastName}` },
 			});
 		}
