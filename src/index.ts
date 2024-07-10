@@ -178,7 +178,7 @@ type RoomResponse = {
 };
 
 type ReservationResponse = {
-	reservation_uuid: string;
+	rord_uuid: string;
 	user: {
 		user_id: string;
 		name: string;
@@ -387,8 +387,8 @@ app.get(
 		});
 
 		for (const row of result.rows) {
-			const reservation_uuid_result = newUuidValue(row.rord_uuid);
-			if (reservation_uuid_result.isErr()) {
+			const rord_uuid_result = newUuidValue(row.rord_uuid);
+			if (rord_uuid_result.isErr()) {
 				throw new Error('Invalid UUID');
 			}
 
@@ -407,7 +407,7 @@ app.get(
 			const user = row.user_id === null ? null : users.data.find((user) => user.id === row.user_id);
 
 			response.push({
-				reservation_uuid: reservation_uuid_result.value.uuid,
+				rord_uuid: rord_uuid_result.value.uuid,
 				room: {
 					room_uuid: room_uuid_result.value.uuid,
 					name: row.room_name ?? '',
@@ -503,8 +503,8 @@ app.get(
 		});
 
 		for (const row of result.rows) {
-			const reservation_uuid_result = newUuidValue(row.rord_uuid);
-			if (reservation_uuid_result.isErr()) {
+			const rord_uuid_result = newUuidValue(row.rord_uuid);
+			if (rord_uuid_result.isErr()) {
 				throw new Error('Invalid UUID');
 			}
 
@@ -523,7 +523,7 @@ app.get(
 			const user = row.user_id === null ? null : users.data.find((user) => user.id === row.user_id);
 
 			response.push({
-				reservation_uuid: reservation_uuid_result.value.uuid,
+				rord_uuid: rord_uuid_result.value.uuid,
 				room: {
 					room_uuid: room_uuid_result.value.uuid,
 					name: row.room_name ?? '',
@@ -614,8 +614,8 @@ app.get(
 		});
 
 		for (const row of result.rows) {
-			const reservation_uuid_result = newUuidValue(row.rord_uuid);
-			if (reservation_uuid_result.isErr()) {
+			const rord_uuid_result = newUuidValue(row.rord_uuid);
+			if (rord_uuid_result.isErr()) {
 				throw new Error('Invalid UUID');
 			}
 
@@ -634,7 +634,7 @@ app.get(
 			const user = row.user_id === null ? null : users.data.find((user) => user.id === row.user_id);
 
 			response.push({
-				reservation_uuid: reservation_uuid_result.value.uuid,
+				rord_uuid: rord_uuid_result.value.uuid,
 				room: {
 					room_uuid: room_uuid_result.value.uuid,
 					name: row.room_name ?? '',
@@ -736,8 +736,8 @@ app.get(
 		const response: ReservationResponse[] = [];
 
 		for (const row of result.rows) {
-			const reservation_uuid_result = newUuidValue(row.rord_uuid);
-			if (reservation_uuid_result.isErr()) {
+			const rord_uuid_result = newUuidValue(row.rord_uuid);
+			if (rord_uuid_result.isErr()) {
 				throw new Error('Invalid UUID');
 			}
 
@@ -754,7 +754,7 @@ app.get(
 			const date = row.date;
 
 			response.push({
-				reservation_uuid: reservation_uuid_result.value.uuid,
+				rord_uuid: rord_uuid_result.value.uuid,
 				room: {
 					room_uuid: room_uuid_result.value.uuid,
 					name: row.room_name ?? '',
@@ -895,7 +895,7 @@ app.delete(
 
 		const result = await pool.query<{ status: 'reserved' | 'disabled'; date: Date; user_id: string | null }>(
 			sql`
-				SELECT rod.status, rod.date, res.user_id FROM reservation_or_disabled rod LEFT JOIN reservation res ON rod.reservation_uuid = res.reservation_uuid WHERE rod.reservation_uuid = ${reservation_uuid_result.value.uuid}::uuid;
+				SELECT rod.status, rod.date, res.user_id FROM reservation_or_disabled rod LEFT JOIN reservation res ON rod.reservation_uuid = res.reservation_uuid WHERE rod.rord_uuid = ${reservation_uuid_result.value.uuid}::uuid;
 			`
 		);
 
