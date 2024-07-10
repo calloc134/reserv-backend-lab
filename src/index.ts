@@ -607,6 +607,115 @@ app.get(
 	}
 );
 
+app.get(
+	'/reservations/start_date/:start_date/end_date/:end_date/my-reservations/',
+	vValidator('param', object({ start_date: string(), end_date: string() }), (result, ctx) => {
+		if (!result.success) {
+			return ctx.json({ message: 'Invalid request' }, 400);
+		}
+	}),
+	async (ctx) => {
+		const pool = ctx.get('pool');
+
+		const clerk_user = getAuth(ctx);
+
+		if (clerk_user === null || clerk_user.userId === null) {
+			return ctx.json({ message: 'Unauthorized' }, 401);
+		}
+
+		const clerk_user_id_result = newUserIdValue(clerk_user.userId);
+
+		if (clerk_user_id_result.isErr()) {
+			return ctx.json({ message: 'Invalid user_id' }, 400);
+		}
+
+		const start_date_result = convertToDate(ctx.req.valid('param').start_date);
+		const end_date_result = convertToDate(ctx.req.valid('param').end_date);
+
+		if (start_date_result.isErr() || end_date_result.isErr()) {
+			return ctx.json({ message: 'Invalid date' }, 400);
+		}
+
+		const start_date = start_date_result.value;
+		const end_date = end_date_result.value;
+
+		const result = await pool.query<{
+			rord_uuid: string;
+			room_uuid: string;
+			status: 'reserved' | 'disabled';
+			date: Date;
+			slot: 'first' | 'second' | 'third' | 'fourth';
+			user_id: string | null;
+		}>(
+			sql`
+			SELECT 
+				rod.rord_uuid,
+				rod.room_uuid,
+				rod.status,
+				rod.date,
+				rod.slot,
+				CASE 
+					WHEN rod.status = 'reserved' THEN res.user_id
+					ELSE NULL
+				END AS user_id
+			FROM 
+				reservation_or_disabled rod
+			LEFT JOIN 
+				reservation res 
+			ON 
+				rod.reservation_uuid = res.reservation_uuid
+			WHERE 
+				res.user_id = ${clerk_user_id_result.value.user_id}::text AND rod.date >= ${start_date} AND rod.date <= ${end_date}
+			ORDER BY 
+				rod.date, 
+				rod.slot;
+	`
+		);
+
+		const clerkClient = createClerkClient({
+			secretKey: ctx.env.CLERK_SECRET_KEY,
+			publishableKey: ctx.env.CLERK_PUBLISHABLE_KEY,
+		});
+
+		const user = await clerkClient.users.getUser(clerk_user.userId);
+
+		if (result.rows.length === 0) {
+			return ctx.json({ message: 'No reservations' }, 404);
+		}
+
+		const response: ReservationResponse[] = [];
+
+		for (const row of result.rows) {
+			const reservation_uuid_result = newUuidValue(row.rord_uuid);
+			if (reservation_uuid_result.isErr()) {
+				throw new Error('Invalid UUID');
+			}
+
+			const room_uuid_result = newUuidValue(row.room_uuid);
+			if (room_uuid_result.isErr()) {
+				throw new Error('Invalid UUID');
+			}
+
+			const slot_result = newSlotValue(row.slot as slot);
+			if (slot_result.isErr()) {
+				throw new Error('Invalid slot');
+			}
+
+			const date = row.date;
+
+			response.push({
+				reservation_uuid: reservation_uuid_result.value.uuid,
+				room_uuid: room_uuid_result.value.uuid,
+				slot: slot_result.value.slot,
+				date,
+				user: { user_id: user.id, name: `${user.firstName} ${user.lastName}` },
+			});
+
+			return ctx.json({ reservations: response });
+		}
+	}
+);
+
 app.post(
 	'/reservations/',
 	vValidator(
