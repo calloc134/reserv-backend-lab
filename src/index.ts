@@ -8,6 +8,7 @@ import { Hono } from 'hono';
 import { ok, err, Result } from 'neverthrow';
 import { uuidv7 } from 'uuidv7';
 import { object, string } from 'valibot';
+import { cors } from 'hono/cors';
 
 // 予約システム
 // ユーザは一週間に一回予約が可能
@@ -132,6 +133,17 @@ function getMondayOfThisWeek(today: Date = new Date()): Date {
 
 	return start_date;
 }
+
+app.use(
+	'*',
+	cors({
+		origin: ['http://localhost:5173'],
+		allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+		allowHeaders: ['Content-Type', 'Authorization'],
+		exposeHeaders: ['Content-Type', 'Authorization'],
+		maxAge: 86400,
+	})
+);
 
 app.use('*', async (ctx, next) => {
 	const { CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY } = ctx.env;
