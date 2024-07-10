@@ -9,6 +9,12 @@ CREATE TABLE room (
   UNIQUE (name)
 );
 
+-- 予約
+CREATE TABLE reservation (
+  reservation_uuid UUID PRIMARY KEY NOT NULL,
+  user_id CHAR(32) NOT NULL
+);
+
 -- 直和を表現するための苦肉の策
 -- https://qiita.com/nunukim/items/49ad482544da0f622ec4
 CREATE TABLE reservation_or_disabled (
@@ -23,11 +29,7 @@ CREATE TABLE reservation_or_disabled (
   FOREIGN KEY (room_uuid) REFERENCES room (room_uuid) on delete cascade
 );
 
--- 予約
-CREATE TABLE reservation (
-  reservation_uuid UUID PRIMARY KEY NOT NULL,
-  user_id CHAR(32) NOT NULL,
-);
+
 
 -- ユーザidで検索するためのインデックス
 CREATE INDEX ON reservation (user_id);

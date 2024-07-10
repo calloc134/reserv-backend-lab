@@ -95,14 +95,6 @@ ALTER TABLE ONLY public.reservation_or_disabled
 
 
 --
--- Name: reservation_or_disabled reservation_or_disabled_reservation_uuid_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reservation_or_disabled
-    ADD CONSTRAINT reservation_or_disabled_reservation_uuid_key UNIQUE (reservation_uuid);
-
-
---
 -- Name: reservation reservation_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -163,19 +155,19 @@ CREATE INDEX reservation_user_id_idx ON public.reservation USING btree (user_id)
 
 
 --
+-- Name: reservation_or_disabled reservation_or_disabled_reservation_uuid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reservation_or_disabled
+    ADD CONSTRAINT reservation_or_disabled_reservation_uuid_fkey FOREIGN KEY (reservation_uuid) REFERENCES public.reservation(reservation_uuid) ON DELETE CASCADE;
+
+
+--
 -- Name: reservation_or_disabled reservation_or_disabled_room_uuid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reservation_or_disabled
     ADD CONSTRAINT reservation_or_disabled_room_uuid_fkey FOREIGN KEY (room_uuid) REFERENCES public.room(room_uuid) ON DELETE CASCADE;
-
-
---
--- Name: reservation reservation_reservation_uuid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.reservation
-    ADD CONSTRAINT reservation_reservation_uuid_fkey FOREIGN KEY (reservation_uuid) REFERENCES public.reservation_or_disabled(reservation_uuid) ON DELETE CASCADE;
 
 
 --
