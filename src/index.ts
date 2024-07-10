@@ -511,9 +511,8 @@ app.get(
 				date,
 				user: user === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
 			});
-
-			return ctx.json({ reservations: response });
 		}
+		return ctx.json({ reservations: response });
 	}
 );
 
@@ -613,9 +612,8 @@ app.get(
 				date,
 				user: user === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
 			});
-
-			return ctx.json({ reservations: response });
 		}
+		return ctx.json({ reservations: response });
 	}
 );
 
@@ -722,9 +720,8 @@ app.get(
 				date,
 				user: { user_id: user.id, name: `${user.firstName} ${user.lastName}` },
 			});
-
-			return ctx.json({ reservations: response });
 		}
+		return ctx.json({ reservations: response });
 	}
 );
 
