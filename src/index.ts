@@ -512,7 +512,7 @@ app.get(
 				user: user === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
 			});
 		}
-		return ctx.json({ reservations: response });
+		return ctx.json({ start_date: convertFromDate(start_date), end_date: convertFromDate(end_date), reservations: response });
 	}
 );
 
@@ -610,10 +610,13 @@ app.get(
 				room_uuid: room_uuid_result.value.uuid,
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
-				user: user === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
+				user:
+					user === null
+						? null
+						: { user_id: user?.id ?? '', name: user?.firstName || user?.lastName ? `${user?.firstName} ${user?.lastName}` : '' },
 			});
 		}
-		return ctx.json({ reservations: response });
+		return ctx.json({ start_date: convertFromDate(start_date), end_date: convertFromDate(end_date), reservations: response });
 	}
 );
 
@@ -721,7 +724,7 @@ app.get(
 				user: { user_id: user.id, name: `${user.firstName} ${user.lastName}` },
 			});
 		}
-		return ctx.json({ reservations: response });
+		return ctx.json({ start_date: convertFromDate(start_date), end_date: convertFromDate(end_date), reservations: response });
 	}
 );
 
