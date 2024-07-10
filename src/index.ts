@@ -183,7 +183,10 @@ type ReservationResponse = {
 		user_id: string;
 		name: string;
 	} | null;
-	room_uuid: string;
+	room: {
+		room_uuid: string;
+		name: string;
+	};
 	slot: slot;
 	date: string;
 };
@@ -339,6 +342,7 @@ app.get(
 		const result = await pool.query<{
 			rord_uuid: string;
 			room_uuid: string;
+			room_name: string | null;
 			status: 'reserved' | 'disabled';
 			date: Date;
 			slot: 'first' | 'second' | 'third' | 'fourth';
@@ -348,6 +352,7 @@ app.get(
 				SELECT 
 					rod.rord_uuid,
 					rod.room_uuid,
+					room.name as room_name,
 					rod.status,
 					rod.date,
 					rod.slot,
@@ -357,6 +362,10 @@ app.get(
 					END AS user_id
 				FROM 
 					reservation_or_disabled rod
+				LEFT JOIN
+					room
+				ON
+					rod.room_uuid = room.room_uuid
 				LEFT JOIN 
 					reservation res 
 				ON 
@@ -399,7 +408,10 @@ app.get(
 
 			response.push({
 				reservation_uuid: reservation_uuid_result.value.uuid,
-				room_uuid: room_uuid_result.value.uuid,
+				room: {
+					room_uuid: room_uuid_result.value.uuid,
+					name: row.room_name ?? '',
+				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
 				user: row.user_id === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
@@ -444,6 +456,7 @@ app.get(
 		const result = await pool.query<{
 			rord_uuid: string;
 			room_uuid: string;
+			room_name: string | null;
 			status: 'reserved' | 'disabled';
 			date: Date;
 			slot: 'first' | 'second' | 'third' | 'fourth';
@@ -453,6 +466,7 @@ app.get(
 			SELECT 
 				rod.rord_uuid,
 				rod.room_uuid,
+				room.name as room_name,
 				rod.status,
 				rod.date,
 				rod.slot,
@@ -462,6 +476,10 @@ app.get(
 				END AS user_id
 			FROM 
 				reservation_or_disabled rod
+			LEFT JOIN
+				room
+			ON
+				rod.room_uuid = room.room_uuid
 			LEFT JOIN 
 				reservation res 
 			ON 
@@ -506,7 +524,10 @@ app.get(
 
 			response.push({
 				reservation_uuid: reservation_uuid_result.value.uuid,
-				room_uuid: room_uuid_result.value.uuid,
+				room: {
+					room_uuid: room_uuid_result.value.uuid,
+					name: row.room_name ?? '',
+				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
 				user: user === null ? null : { user_id: user?.id ?? '', name: user?.username ?? '' },
@@ -542,9 +563,11 @@ app.get(
 		const start_date = start_date_result.value;
 		const end_date = end_date_result.value;
 
+		// room_nameがnullになる場合があるのなんでだろう
 		const result = await pool.query<{
 			rord_uuid: string;
 			room_uuid: string;
+			room_name: string | null;
 			status: 'reserved' | 'disabled';
 			date: Date;
 			slot: 'first' | 'second' | 'third' | 'fourth';
@@ -554,6 +577,7 @@ app.get(
 			SELECT 
 				rod.rord_uuid,
 				rod.room_uuid,
+				room.name as room_name,
 				rod.status,
 				rod.date,
 				rod.slot,
@@ -563,6 +587,10 @@ app.get(
 				END AS user_id
 			FROM 
 				reservation_or_disabled rod
+			LEFT JOIN
+				room
+			ON
+				rod.room_uuid = room.room_uuid
 			LEFT JOIN 
 				reservation res 
 			ON 
@@ -607,7 +635,10 @@ app.get(
 
 			response.push({
 				reservation_uuid: reservation_uuid_result.value.uuid,
-				room_uuid: room_uuid_result.value.uuid,
+				room: {
+					room_uuid: room_uuid_result.value.uuid,
+					name: row.room_name ?? '',
+				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
 				user:
@@ -655,6 +686,7 @@ app.get(
 		const result = await pool.query<{
 			rord_uuid: string;
 			room_uuid: string;
+			room_name: string | null;
 			status: 'reserved' | 'disabled';
 			date: Date;
 			slot: 'first' | 'second' | 'third' | 'fourth';
@@ -664,6 +696,7 @@ app.get(
 			SELECT 
 				rod.rord_uuid,
 				rod.room_uuid,
+				room.name as room_name,
 				rod.status,
 				rod.date,
 				rod.slot,
@@ -673,6 +706,10 @@ app.get(
 				END AS user_id
 			FROM 
 				reservation_or_disabled rod
+			LEFT JOIN
+				room
+			ON
+				rod.room_uuid = room.room_uuid
 			LEFT JOIN 
 				reservation res 
 			ON 
@@ -718,7 +755,10 @@ app.get(
 
 			response.push({
 				reservation_uuid: reservation_uuid_result.value.uuid,
-				room_uuid: room_uuid_result.value.uuid,
+				room: {
+					room_uuid: room_uuid_result.value.uuid,
+					name: row.room_name ?? '',
+				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
 				user: { user_id: user.id, name: `${user.firstName} ${user.lastName}` },
