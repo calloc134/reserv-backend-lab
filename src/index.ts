@@ -156,7 +156,7 @@ app.use('*', async (ctx, next) => {
 	const clerk_user = getAuth(ctx);
 	if (!clerk_user || !clerk_user.userId) {
 		console.debug('Unauthorized');
-		return ctx.json({ message: 'Unauthorized' }, 401);
+		return ctx.json({ message: 'ログインしていません。' }, 401);
 	}
 
 	await next();
@@ -251,7 +251,7 @@ app.patch(
 			return ctx.json({ message: 'Room not found' }, 404);
 		}
 
-		return ctx.json({ message: 'Success' });
+		return ctx.json({ message: '名前の変更が完了しました。' });
 	}
 );
 
@@ -313,7 +313,7 @@ app.post(
 			return ctx.json({ message: 'Failed to insert' }, 500);
 		}
 
-		return ctx.json({ message: 'Success' });
+		return ctx.json({ message: '利用禁止の日時を設定しました。' });
 	}
 );
 
@@ -664,7 +664,7 @@ app.get(
 		const clerk_user = getAuth(ctx);
 
 		if (!clerk_user || !clerk_user.userId) {
-			return ctx.json({ message: 'Unauthorized' }, 401);
+			return ctx.json({ message: 'ログインしていません。' }, 401);
 		}
 
 		const clerk_user_id_result = newUserIdValue(clerk_user.userId);
@@ -819,7 +819,7 @@ app.post(
 		);
 
 		if (result.rows[0].count !== 0) {
-			return ctx.json({ message: 'Already reserved' }, 400);
+			return ctx.json({ message: 'すでに予約が埋まっています。' }, 400);
 		}
 
 		// 自分が一週間以内に予約しているか確認
@@ -827,7 +827,7 @@ app.post(
 		const clerk_user = getAuth(ctx);
 
 		if (!clerk_user || !clerk_user.userId) {
-			return ctx.json({ message: 'Forbidden' }, 403);
+			return ctx.json({ message: 'ログインしていません。' }, 401);
 		}
 
 		const user_id_result = newUserIdValue(clerk_user.userId);
@@ -845,7 +845,7 @@ app.post(
 		);
 
 		if (result_2.rows[0].count !== 0) {
-			return ctx.json({ message: 'Already reserved' }, 400);
+			return ctx.json({ message: '一週間以内に予約しています。' }, 400);
 		}
 
 		const reservation_or_disabled_uuid = createUuidValue();
@@ -872,7 +872,7 @@ app.post(
 			return ctx.json({ message: 'Failed to insert' }, 500);
 		}
 
-		return ctx.json({ message: 'Success' });
+		return ctx.json({ message: '予約が完了しました。' });
 	}
 );
 
@@ -900,17 +900,17 @@ app.delete(
 		);
 
 		if (result.rows.length !== 1) {
-			return ctx.json({ message: 'Reservation not found' }, 404);
+			return ctx.json({ message: '対応する予約が見つかりません。' }, 404);
 		}
 
 		if (result.rows[0].status !== 'reserved' || result.rows[0].user_id === null) {
-			return ctx.json({ message: 'Reservation is disabled or user_id is null' }, 400);
+			return ctx.json({ message: '予約ではなく、利用禁止の日時です。' }, 400);
 		}
 
 		const clerk_user = getAuth(ctx);
 
 		if (!clerk_user || !clerk_user.userId) {
-			return ctx.json({ message: 'Unauthorized' }, 401);
+			return ctx.json({ message: 'ログインしていません。' }, 401);
 		}
 
 		const clerk_user_id_result = newUserIdValue(clerk_user.userId);
@@ -920,11 +920,11 @@ app.delete(
 		}
 
 		if (result.rows[0].user_id !== clerk_user_id_result.value.user_id) {
-			return ctx.json({ message: 'Unauthorized' }, 401);
+			return ctx.json({ message: '他のユーザの予約はキャンセルできません。' }, 403);
 		}
 
 		if (result.rows[0].date === null) {
-			return ctx.json({ message: 'Invalid date' }, 500);
+			return ctx.json({ message: 'Invalid date' }, 400);
 		}
 
 		const date = result.rows[0].date;
@@ -932,7 +932,7 @@ app.delete(
 		const now = new Date();
 
 		if (date.getTime() - now.getTime() < 3 * 24 * 60 * 60 * 1000) {
-			return ctx.json({ message: 'Too late to cancel' }, 400);
+			return ctx.json({ message: 'キャンセルは3日以上先の予約のみ可能です。' }, 400);
 		}
 
 		const result_2 = await pool.query<{ rord_uuid: string }>(
@@ -948,7 +948,7 @@ app.delete(
 			return ctx.json({ message: 'Failed to delete' }, 500);
 		}
 
-		return ctx.json({ message: 'Success' });
+		return ctx.json({ message: '予約をキャンセルしました。' });
 	}
 );
 
