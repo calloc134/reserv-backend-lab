@@ -367,9 +367,9 @@ app.get(
 		`
 		);
 
-		if (result.rows.length === 0) {
-			return ctx.json({ message: 'No reservations' }, 404);
-		}
+		// if (result.rows.length === 0) {
+		// 	return ctx.json({ message: 'No reservations' }, 404);
+		// }
 
 		const response: ReservationResponse[] = [];
 
@@ -474,9 +474,9 @@ app.get(
 	`
 		);
 
-		if (result.rows.length === 0) {
-			return ctx.json({ message: 'No reservations' }, 404);
-		}
+		// if (result.rows.length === 0) {
+		// 	return ctx.json({ message: 'No reservations' }, 404);
+		// }
 
 		const response: ReservationResponse[] = [];
 
@@ -576,9 +576,9 @@ app.get(
 	`
 		);
 
-		if (result.rows.length === 0) {
-			return ctx.json({ message: 'No reservations' }, 404);
-		}
+		// if (result.rows.length === 0) {
+		// 	return ctx.json({ message: 'No reservations' }, 404);
+		// }
 
 		const response: ReservationResponse[] = [];
 
@@ -691,9 +691,9 @@ app.get(
 
 		const user = await clerkClient.users.getUser(clerk_user.userId);
 
-		if (result.rows.length === 0) {
-			return ctx.json({ message: 'No reservations' }, 404);
-		}
+		// if (result.rows.length === 0) {
+		// 	return ctx.json({ message: 'No reservations' }, 404);
+		// }
 
 		const response: ReservationResponse[] = [];
 
