@@ -154,7 +154,7 @@ app.use('*', async (ctx, next) => {
 	})(ctx, async () => {});
 
 	const clerk_user = getAuth(ctx);
-	if (clerk_user === null || clerk_user.userId === null) {
+	if (!clerk_user || !clerk_user.userId) {
 		console.debug('Unauthorized');
 		return ctx.json({ message: 'Unauthorized' }, 401);
 	}
@@ -631,7 +631,7 @@ app.get(
 
 		const clerk_user = getAuth(ctx);
 
-		if (clerk_user === null || clerk_user.userId === null) {
+		if (!clerk_user || !clerk_user.userId) {
 			return ctx.json({ message: 'Unauthorized' }, 401);
 		}
 
@@ -786,7 +786,7 @@ app.post(
 		// const user_id = 'user_2cSSCzV7948rhPJMsY601tXsEU4';
 		const clerk_user = getAuth(ctx);
 
-		if (clerk_user === null || clerk_user.userId === null) {
+		if (!clerk_user || !clerk_user.userId) {
 			return ctx.json({ message: 'Forbidden' }, 403);
 		}
 
@@ -869,7 +869,7 @@ app.delete(
 
 		const clerk_user = getAuth(ctx);
 
-		if (clerk_user === null || clerk_user.userId === null) {
+		if (!clerk_user || !clerk_user.userId) {
 			return ctx.json({ message: 'Unauthorized' }, 401);
 		}
 
