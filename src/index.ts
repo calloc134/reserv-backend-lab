@@ -1,13 +1,13 @@
-// src/templates/basic/index.ts
 import { clerkMiddleware, getAuth } from '@hono/clerk-auth';
 import { createClerkClient } from '@clerk/backend';
 import { vValidator } from '@hono/valibot-validator';
 import { Pool } from '@neondatabase/serverless';
 import { sql } from '@ts-safeql/sql-tag';
 import { Hono } from 'hono';
-import { ok, err, Result, fromPromise } from 'neverthrow';
+// sql呼び出しでエラーが出たら素直にthrowする
+import { ok, err, Result } from 'neverthrow';
 import { uuidv7 } from 'uuidv7';
-import { object, string, union } from 'valibot';
+import { object, string } from 'valibot';
 
 // 予約システム
 // ユーザは一週間に一回予約が可能
@@ -432,26 +432,26 @@ app.get(
 // 			user_id: string | null;
 // 		}>(
 // 			sql`
-// 				SELECT 
+// 				SELECT
 // 					rod.rord_uuid,
 // 					rod.room_uuid,
 // 					rod.status,
 // 					rod.date,
 // 					rod.slot,
-// 					CASE 
+// 					CASE
 // 						WHEN rod.status = 'reserved' THEN res.user_id
 // 						ELSE NULL
 // 					END AS user_id
-// 				FROM 
+// 				FROM
 // 					reservation_or_disabled rod
-// 				LEFT JOIN 
-// 					reservation res 
-// 				ON 
+// 				LEFT JOIN
+// 					reservation res
+// 				ON
 // 					rod.reservation_uuid = res.reservation_uuid
-// 				WHERE 
+// 				WHERE
 // 					rod.date >= ${start_date} AND rod.date <= ${end_date}
-// 				ORDER BY 
-// 					rod.date, 
+// 				ORDER BY
+// 					rod.date,
 // 					rod.slot;
 // 		`
 // 		);
