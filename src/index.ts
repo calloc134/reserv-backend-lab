@@ -137,7 +137,7 @@ function getMondayOfThisWeek(today: Date = new Date()): Date {
 app.use(
 	'*',
 	cors({
-		origin: ['http://localhost:5173'],
+		origin: ['http://localhost:5173', 'https://reserv-frontend-lab.pages.dev'],
 		allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 		allowHeaders: ['Content-Type', 'Authorization'],
 		exposeHeaders: ['Content-Type', 'Authorization'],
