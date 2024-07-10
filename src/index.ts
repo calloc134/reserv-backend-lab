@@ -715,7 +715,7 @@ app.get(
 			ON 
 				rod.reservation_uuid = res.reservation_uuid
 			WHERE 
-				res.user_id = ${clerk_user_id_result.value.user_id}::text AND rod.date >= ${start_date} AND rod.date <= ${end_date}
+				(rod.status = 'disabled' OR res.user_id = ${clerk_user_id_result.value.user_id}::text) AND rod.date >= ${start_date} AND rod.date <= ${end_date}
 			ORDER BY 
 				rod.date, 
 				rod.slot;
@@ -761,7 +761,7 @@ app.get(
 				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
-				user: { user_id: user.id, name: `${user.firstName} ${user.lastName}` },
+				user: row.status === 'disabled' ? null : { user_id: user.id, name: `${user.firstName} ${user.lastName}` },
 			});
 		}
 		return ctx.json({ start_date: convertFromDate(start_date), end_date: convertFromDate(end_date), reservations: response });
