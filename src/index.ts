@@ -66,7 +66,7 @@ function newUuidValue(uuid: string): Result<UuidValue, Error> {
 
 function convertToDate(date: string): Result<Date, Error> {
 	// YYYY/MM/DD
-	const [year, month, day] = date.split('/').map((x) => parseInt(x, 10));
+	const [year, month, day] = date.split('-').map((x) => parseInt(x, 10));
 	if (isNaN(year) || isNaN(month) || isNaN(day)) {
 		return err(new Error('Invalid date'));
 	}
@@ -77,7 +77,7 @@ function convertFromDate(date: Date): string {
 	const year = date.getFullYear();
 	const month = date.getMonth() + 1;
 	const day = date.getDate();
-	return `${year}/${month}/${day}`;
+	return `${year}-${month}-${day}`;
 }
 
 type slot = 'first' | 'second' | 'third' | 'fourth';
