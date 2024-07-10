@@ -19,7 +19,7 @@ CREATE TABLE reservation_or_disabled (
   date DATE NOT NULL,
   slot slot NOT NULL,
   UNIQUE (date, slot),
-  UNIQUE (reservation_uuid),
+  FOREIGN KEY (reservation_uuid) REFERENCES reservation (reservation_uuid) on delete cascade,
   FOREIGN KEY (room_uuid) REFERENCES room (room_uuid) on delete cascade
 );
 
@@ -27,7 +27,6 @@ CREATE TABLE reservation_or_disabled (
 CREATE TABLE reservation (
   reservation_uuid UUID PRIMARY KEY NOT NULL,
   user_id CHAR(32) NOT NULL,
-  FOREIGN KEY (reservation_uuid) REFERENCES reservation_or_disabled (reservation_uuid) on delete cascade
 );
 
 -- ユーザidで検索するためのインデックス
