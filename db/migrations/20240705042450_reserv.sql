@@ -24,7 +24,7 @@ CREATE TABLE reservation_or_disabled (
   reservation_uuid UUID,
   date DATE NOT NULL,
   slot slot NOT NULL,
-  UNIQUE (date, slot),
+  UNIQUE (date, slot, room_uuid),
   FOREIGN KEY (reservation_uuid) REFERENCES reservation (reservation_uuid) on delete cascade,
   FOREIGN KEY (room_uuid) REFERENCES room (room_uuid) on delete cascade
 );
@@ -43,8 +43,8 @@ CREATE INDEX ON reservation_or_disabled (date, slot);
 
 -- migrate:down
 
-DROP TABLE reservation;
 DROP TABLE reservation_or_disabled;
+DROP TABLE reservation;
 DROP TABLE room;
 DROP TYPE slot;
 DROP TYPE status;

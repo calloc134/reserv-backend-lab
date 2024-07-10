@@ -79,11 +79,11 @@ CREATE TABLE public.schema_migrations (
 
 
 --
--- Name: reservation_or_disabled reservation_or_disabled_date_slot_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: reservation_or_disabled reservation_or_disabled_date_slot_room_uuid_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reservation_or_disabled
-    ADD CONSTRAINT reservation_or_disabled_date_slot_key UNIQUE (date, slot);
+    ADD CONSTRAINT reservation_or_disabled_date_slot_room_uuid_key UNIQUE (date, slot, room_uuid);
 
 
 --
