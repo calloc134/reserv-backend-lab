@@ -935,8 +935,8 @@ app.post(
 );
 
 app.delete(
-	'/reservations/:reservation_uuid/',
-	vValidator('param', object({ reservation_uuid: string() }), (result, ctx) => {
+	'/reservations/:rord_uuid/',
+	vValidator('param', object({ rord_uuid: string() }), (result, ctx) => {
 		if (!result.success) {
 			return ctx.json({ message: 'Invalid request' }, 400);
 		}
@@ -945,15 +945,15 @@ app.delete(
 	async (ctx) => {
 		const pool = ctx.get('pool');
 
-		const reservation_uuid_result = newUuidValue(ctx.req.valid('param').reservation_uuid);
+		const rord_uuid_result = newUuidValue(ctx.req.valid('param').rord_uuid);
 
-		if (reservation_uuid_result.isErr()) {
-			return ctx.json({ message: 'Invalid reservation_uuid' }, 400);
+		if (rord_uuid_result.isErr()) {
+			return ctx.json({ message: 'Invalid rord_uuid' }, 400);
 		}
 
 		const result = await pool.query<{ status: 'reserved' | 'disabled'; date: Date; user_id: string | null }>(
 			sql`
-				SELECT rod.status, rod.date, res.user_id FROM reservation_or_disabled rod LEFT JOIN reservation res ON rod.reservation_uuid = res.reservation_uuid WHERE rod.rord_uuid = ${reservation_uuid_result.value.uuid}::uuid;
+				SELECT rod.status, rod.date, res.user_id FROM reservation_or_disabled rod LEFT JOIN reservation res ON rod.reservation_uuid = res.reservation_uuid WHERE rod.rord_uuid = ${rord_uuid_result.value.uuid}::uuid;
 			`
 		);
 
@@ -994,9 +994,10 @@ app.delete(
 		}
 
 		const result_2 = await pool.query<{ rord_uuid: string }>(
-			sql`
-				DELETE FROM reservation_or_disabled WHERE reservation_uuid = ${reservation_uuid_result.value.uuid}::uuid RETURNING rord_uuid;
-			`
+			// sql`
+			// 	DELETE FROM reservation_or_disabled WHERE rord_uuid = ${rord_uuid_result.value.uuid}::uuid RETURNING rord_uuid;
+			// `
+			sql` DELETE FROM reservation USING reservation_or_disabled WHERE reservation.reservation_uuid = reservation_or_disabled.reservation_uuid AND reservation_or_disabled.rord_uuid = ${rord_uuid_result.value.uuid}::uuid RETURNING rord_uuid;`
 		);
 
 		// cascadeなのでreservationも消える
