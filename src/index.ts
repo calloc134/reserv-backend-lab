@@ -395,7 +395,7 @@ app.get(
 		const result = await pool.query<{
 			rord_uuid: string;
 			room_uuid: string;
-			room_name: string | null;
+			room_name: string;
 			status: 'reserved' | 'disabled';
 			date: Date;
 			slot: 'first' | 'second' | 'third' | 'fourth';
@@ -415,7 +415,7 @@ app.get(
 					END AS user_id
 				FROM 
 					reservation_or_disabled rod
-				LEFT JOIN
+				INNER JOIN
 					room
 				ON
 					rod.room_uuid = room.room_uuid
@@ -463,7 +463,7 @@ app.get(
 				rord_uuid: rord_uuid_result.value.uuid,
 				room: {
 					room_uuid: room_uuid_result.value.uuid,
-					name: row.room_name ?? '',
+					name: row.room_name,
 				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
@@ -509,7 +509,7 @@ app.get(
 		const result = await pool.query<{
 			rord_uuid: string;
 			room_uuid: string;
-			room_name: string | null;
+			room_name: string;
 			status: 'reserved' | 'disabled';
 			date: Date;
 			slot: 'first' | 'second' | 'third' | 'fourth';
@@ -529,7 +529,7 @@ app.get(
 				END AS user_id
 			FROM 
 				reservation_or_disabled rod
-			LEFT JOIN
+			INNER JOIN
 				room
 			ON
 				rod.room_uuid = room.room_uuid
@@ -579,7 +579,7 @@ app.get(
 				rord_uuid: rord_uuid_result.value.uuid,
 				room: {
 					room_uuid: room_uuid_result.value.uuid,
-					name: row.room_name ?? '',
+					name: row.room_name,
 				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
@@ -620,7 +620,7 @@ app.get(
 		const result = await pool.query<{
 			rord_uuid: string;
 			room_uuid: string;
-			room_name: string | null;
+			room_name: string;
 			status: 'reserved' | 'disabled';
 			date: Date;
 			slot: 'first' | 'second' | 'third' | 'fourth';
@@ -640,7 +640,7 @@ app.get(
 				END AS user_id
 			FROM 
 				reservation_or_disabled rod
-			LEFT JOIN
+			INNER JOIN
 				room
 			ON
 				rod.room_uuid = room.room_uuid
@@ -690,7 +690,7 @@ app.get(
 				rord_uuid: rord_uuid_result.value.uuid,
 				room: {
 					room_uuid: room_uuid_result.value.uuid,
-					name: row.room_name ?? '',
+					name: row.room_name,
 				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
@@ -739,7 +739,7 @@ app.get(
 		const result = await pool.query<{
 			rord_uuid: string;
 			room_uuid: string;
-			room_name: string | null;
+			room_name: string;
 			status: 'reserved' | 'disabled';
 			date: Date;
 			slot: 'first' | 'second' | 'third' | 'fourth';
@@ -759,7 +759,7 @@ app.get(
 				END AS user_id
 			FROM 
 				reservation_or_disabled rod
-			LEFT JOIN
+			INNER JOIN
 				room
 			ON
 				rod.room_uuid = room.room_uuid
@@ -810,7 +810,7 @@ app.get(
 				rord_uuid: rord_uuid_result.value.uuid,
 				room: {
 					room_uuid: room_uuid_result.value.uuid,
-					name: row.room_name ?? '',
+					name: row.room_name,
 				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
