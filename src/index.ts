@@ -856,6 +856,11 @@ app.post(
 		// 該当する日にちの一週間について取得
 		const date = new Date(raw_date);
 
+		// まず、本日より前の日付であればエラー
+		if (date < new Date()) {
+			return ctx.json({ message: '過去の日付は予約できません。' }, 400);
+		}
+
 		// 念の為、平日であることを確認
 		if (date.getDay() === 0 || date.getDay() === 6) {
 			return ctx.json({ message: 'Invalid date' }, 400);
