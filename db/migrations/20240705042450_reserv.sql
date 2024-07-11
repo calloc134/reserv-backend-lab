@@ -35,8 +35,8 @@ CREATE TABLE reservation_or_disabled (
 CREATE INDEX ON reservation (user_id);
 -- 部屋idで検索するためのインデックス
 CREATE INDEX ON reservation_or_disabled (room_uuid);
--- 予約日で検索するためのインデックス
-CREATE INDEX ON reservation_or_disabled (date);
+-- 予約idで検索するためのインデックス
+CREATE INDEX ON reservation_or_disabled (reservation_uuid);
 -- 予約日と枠で検索するためのインデックス
 CREATE INDEX ON reservation_or_disabled (date, slot);
 
