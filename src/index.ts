@@ -858,7 +858,7 @@ app.post(
 
 		// まず、本日より前の日付であればエラー
 		if (date < new Date()) {
-			return ctx.json({ message: '過去の日付は予約できません。' }, 400);
+			return ctx.json({ message: '過去・当日の日付は予約できません。' }, 400);
 		}
 
 		// 念の為、平日であることを確認
