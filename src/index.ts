@@ -265,49 +265,6 @@ app.get(
 	}
 );
 
-app.patch(
-	'/rooms/',
-	vValidator(
-		'json',
-		object({
-			room_uuid: string(),
-			name: string(),
-		}),
-		(result, ctx) => {
-			if (!result.success) {
-				return ctx.json({ message: 'Invalid request' }, 400);
-			}
-		}
-	),
-	async (ctx) => {
-		const pool = ctx.get('pool');
-
-		const room_uuid_result = newUuidValue(ctx.req.valid('json').room_uuid);
-
-		if (room_uuid_result.isErr()) {
-			return ctx.json({ message: 'Invalid room_uuid' }, 400);
-		}
-
-		const name_result = newNameValue(ctx.req.valid('json').name);
-
-		if (name_result.isErr()) {
-			return ctx.json({ message: 'Invalid name' }, 400);
-		}
-
-		const result = await pool.query<{ room_uuid: string }>(
-			sql`
-				UPDATE room SET name = ${name_result.value.name} WHERE room_uuid = ${room_uuid_result.value.uuid}::uuid RETURNING room_uuid;
-			`
-		);
-
-		if (result.rows.length !== 1) {
-			return ctx.json({ message: 'Room not found' }, 404);
-		}
-
-		return ctx.json({ message: '名前の変更が完了しました。' });
-	}
-);
-
 // 無効にする日時の設定
 // disabled予定を4つ挿入している
 app.post(
@@ -317,6 +274,7 @@ app.post(
 		object({
 			room_uuid: string(),
 			date: string(),
+			slot: string(),
 		}),
 		(result, ctx) => {
 			if (!result.success) {
@@ -326,13 +284,19 @@ app.post(
 	),
 	async (ctx) => {
 		const pool = ctx.get('pool');
-		const { date: raw_date } = ctx.req.valid('json');
+		const { date: raw_date, slot: raw_slot } = ctx.req.valid('json');
 
 		// 形式はYYYY/MM/DD
 		const date_result = convertToDate(raw_date);
 
 		if (date_result.isErr()) {
 			return ctx.json({ message: 'Invalid date' }, 400);
+		}
+
+		const slot_result = newSlotValue(raw_slot as slot);
+
+		if (slot_result.isErr()) {
+			return ctx.json({ message: 'Invalid slot' }, 400);
 		}
 
 		const room_uuid_result = newUuidValue(ctx.req.valid('json').room_uuid);
@@ -350,23 +314,25 @@ app.post(
 			return ctx.json({ message: 'Room not found' }, 404);
 		}
 
-		// uuidを4個作成
-		const uuids = [createUuidValue(), createUuidValue(), createUuidValue(), createUuidValue()];
+		// uuidを作成
+		const uuid = createUuidValue();
 
-		const result_2 = await pool.query<{ rord_uuid: string }>(sql`
+		const result_2 = await pool.query<{
+			rord_uuid: string;
+			slot: 'first' | 'second' | 'third' | 'fourth';
+			date: Date;
+			room_uuid: string;
+		}>(sql`
 			INSERT INTO reservation_or_disabled (rord_uuid, slot, date, room_uuid, status) VALUES
-				(${uuids[0].uuid}::uuid, 'first', ${date_result.value}, ${room_uuid_result.value.uuid}::uuid, 'disabled'),
-				(${uuids[1].uuid}::uuid, 'second', ${date_result.value}, ${room_uuid_result.value.uuid}::uuid, 'disabled'),
-				(${uuids[2].uuid}::uuid, 'third', ${date_result.value}, ${room_uuid_result.value.uuid}::uuid, 'disabled'),
-				(${uuids[3].uuid}::uuid, 'fourth', ${date_result.value}, ${room_uuid_result.value.uuid}::uuid, 'disabled')
-				RETURNING rord_uuid;
+				(${uuid.uuid}::uuid, ${slot_result.value.slot}::slot, ${date_result.value}, ${room_uuid_result.value.uuid}::uuid, 'disabled')
+				RETURNING rord_uuid, slot, date, room_uuid;
 		`);
 
-		if (result_2.rows.length !== 4) {
+		if (result_2.rows.length !== 1) {
 			return ctx.json({ message: 'Failed to insert' }, 500);
 		}
 
-		return ctx.json({ message: '利用禁止の日時を設定しました。' });
+		return ctx.json({ message: `利用禁止の日時を設定しました: ${convertFromDate(date_result.value)} ${slot_result.value.slot}` });
 	}
 );
 
