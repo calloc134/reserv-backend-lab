@@ -137,7 +137,7 @@ function getMondayOfThisWeek(today: Date = new Date()): Date {
 app.use(
 	'*',
 	cors({
-		origin: ['http://localhost:5173', 'https://reserv-frontend-lab.pages.dev', 'https://silver-monstera-ea5373.netlify.app'],
+		origin: ['http://localhost:5173', 'https://silver-monstera-ea5373.netlify.app'],
 		allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 		allowHeaders: ['Content-Type', 'Authorization'],
 		exposeHeaders: ['Content-Type', 'Authorization'],
