@@ -408,31 +408,31 @@ app.get(
 		}>(
 			sql`
 			SELECT 
-				rod.rord_uuid,
-				rod.room_uuid,
+				rord.rord_uuid,
+				rord.room_uuid,
 				room.name as room_name,
-				rod.status,
-				rod.date,
-				rod.slot,
+				rord.status,
+				rord.date,
+				rord.slot,
 				CASE 
-					WHEN rod.status = 'reserved' THEN res.user_id
+					WHEN rord.status = 'reserved' THEN res.user_id
 					ELSE NULL
 				END AS user_id
 			FROM 
-				reservation_or_disabled rod
+				reservation_or_disabled rord
 			INNER JOIN
 				room
 			ON
-				rod.room_uuid = room.room_uuid
+				rord.room_uuid = room.room_uuid
 			LEFT JOIN 
 				reservation res 
 			ON 
-				rod.reservation_uuid = res.reservation_uuid
+				rord.reservation_uuid = res.reservation_uuid
 			WHERE 
-				rod.date >= ${start_date} AND rod.date <= ${end_date}
+				rord.date >= ${start_date} AND rord.date <= ${end_date}
 			ORDER BY 
-				rod.date, 
-				rod.slot;
+				rord.date, 
+				rord.slot;
 	`
 		);
 
@@ -527,31 +527,31 @@ app.get(
 		}>(
 			sql`
 			SELECT 
-				rod.rord_uuid,
-				rod.room_uuid,
+				rord.rord_uuid,
+				rord.room_uuid,
 				room.name as room_name,
-				rod.status,
-				rod.date,
-				rod.slot,
+				rord.status,
+				rord.date,
+				rord.slot,
 				CASE 
-					WHEN rod.status = 'reserved' THEN res.user_id
+					WHEN rord.status = 'reserved' THEN res.user_id
 					ELSE NULL
 				END AS user_id
 			FROM 
-				reservation_or_disabled rod
+				reservation_or_disabled rord
 			INNER JOIN
 				room
 			ON
-				rod.room_uuid = room.room_uuid
+				rord.room_uuid = room.room_uuid
 			LEFT JOIN 
 				reservation res 
 			ON 
-				rod.reservation_uuid = res.reservation_uuid
+				rord.reservation_uuid = res.reservation_uuid
 			WHERE 
-				(rod.status = 'disabled' OR res.user_id = ${clerk_user_id_result.value.user_id}::text) AND rod.date >= ${start_date} AND rod.date <= ${end_date}
+				(rord.status = 'disabled' OR res.user_id = ${clerk_user_id_result.value.user_id}::text) AND rord.date >= ${start_date} AND rord.date <= ${end_date}
 			ORDER BY 
-				rod.date, 
-				rod.slot;
+				rord.date, 
+				rord.slot;
 	`
 		);
 
@@ -676,9 +676,9 @@ app.post(
 
 		const result_2 = await pool.query<{ count: number }>(
 			sql`
-				SELECT count(*)::int FROM reservation_or_disabled rod
-				LEFT JOIN reservation res ON rod.reservation_uuid = res.reservation_uuid
-				WHERE res.user_id = ${user_id_result.value.user_id}::text AND rod.date >= ${start_date} AND rod.date <= ${end_date};
+				SELECT count(*)::int FROM reservation_or_disabled rord
+				LEFT JOIN reservation res ON rord.reservation_uuid = res.reservation_uuid
+				WHERE res.user_id = ${user_id_result.value.user_id}::text AND rord.date >= ${start_date} AND rord.date <= ${end_date};
 			`
 		);
 
@@ -733,7 +733,7 @@ app.delete(
 
 		const result = await pool.query<{ status: 'reserved' | 'disabled'; date: Date; user_id: string | null }>(
 			sql`
-				SELECT rod.status, rod.date, res.user_id FROM reservation_or_disabled rod LEFT JOIN reservation res ON rod.reservation_uuid = res.reservation_uuid WHERE rod.rord_uuid = ${rord_uuid_result.value.uuid}::uuid;
+				SELECT rord.status, rord.date, res.user_id FROM reservation_or_disabled rord LEFT JOIN reservation res ON rord.reservation_uuid = res.reservation_uuid WHERE rord.rord_uuid = ${rord_uuid_result.value.uuid}::uuid;
 			`
 		);
 
