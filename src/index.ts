@@ -22,6 +22,8 @@ import { convertFromDate } from './utils/convertFromDate';
 // DTOのimport
 import { RoomResponse } from './handler/dto/RoomResponse';
 import { ReservationResponse } from './handler/dto/ReservationResponse';
+import { findByUserId } from './repositories/user/findByUserId';
+import { findByUserIds } from './repositories/user/findByUserIds';
 
 // 予約システム
 // ユーザは一週間に一回予約が可能
@@ -298,9 +300,18 @@ app.get(
 
 		const response: ReservationResponse[] = [];
 
-		const users = await clerkClient.users.getUserList({
-			userId: result.rows.map((row) => row.user_id).filter((x): x is string => x !== null),
-		});
+		// const users = await clerkClient.users.getUserList({
+		// 	userId: result.rows.map((row) => row.user_id).filter((x): x is string => x !== null),
+		// });
+
+		const users = await findByUserIds(
+			{ clerkClient },
+			result.rows.map((row) => row.user_id).filter((x): x is string => x !== null)
+		);
+
+		if (users.isErr()) {
+			return ctx.json({ message: 'Error on fetching users' }, 500);
+		}
 
 		for (const row of result.rows) {
 			const rord_uuid_result = newUuidValue(row.rord_uuid);
@@ -320,7 +331,8 @@ app.get(
 
 			const date = row.date;
 
-			const user = row.user_id === null ? null : users.data.find((user) => user.id === row.user_id);
+			// const user = row.user_id === null ? null : users.data.find((user) => user.id === row.user_id);
+			const user = row.user_id === null ? null : users.value.find((user) => user.user_id === row.user_id);
 
 			response.push({
 				rord_uuid: rord_uuid_result.value.uuid,
@@ -330,10 +342,10 @@ app.get(
 				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
-				user:
-					user === null
-						? null
-						: { user_id: user?.id ?? '', name: user?.firstName || user?.lastName ? `${user?.firstName} ${user?.lastName}` : '' },
+				user: !user
+					? null
+					: // : { user_id: user?.id ?? '', name: user?.firstName || user?.lastName ? `${user?.firstName} ${user?.lastName}` : '' },
+					  { user_id: user.user_id, name: `${user.firstName} ${user.lastName}` },
 			});
 		}
 		return ctx.json({ start_date: convertFromDate(start_date), end_date: convertFromDate(end_date), reservations: response });
@@ -417,7 +429,12 @@ app.get(
 			publishableKey: ctx.env.CLERK_PUBLISHABLE_KEY,
 		});
 
-		const user = await clerkClient.users.getUser(clerk_user.userId);
+		// const user = await clerkClient.users.getUser(clerk_user.userId);
+		const user = await findByUserId({ clerkClient }, clerk_user.userId);
+
+		if (user.isErr()) {
+			return ctx.json({ message: 'User not found' }, 404);
+		}
 
 		const response: ReservationResponse[] = [];
 
@@ -447,7 +464,7 @@ app.get(
 				},
 				slot: slot_result.value.slot,
 				date: convertFromDate(date),
-				user: row.status === 'disabled' ? null : { user_id: user.id, name: `${user.firstName} ${user.lastName}` },
+				user: row.status === 'disabled' ? null : { user_id: user.value.user_id, name: `${user.value.firstName} ${user.value.lastName}` },
 			});
 		}
 		return ctx.json({ start_date: convertFromDate(start_date), end_date: convertFromDate(end_date), reservations: response });
