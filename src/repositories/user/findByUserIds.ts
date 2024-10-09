@@ -1,17 +1,16 @@
 import { ClerkClient } from '@clerk/backend';
 import { type User } from '../../domain/User';
 import { err, ok, type Result } from 'neverthrow';
+import { newUserIdValue, UserIdValue } from '../../domain/UserIdValue';
 
 export async function findByUserIds(
 	dependencies: {
 		clerkClient: ClerkClient;
 	},
-	// ここは値オブジェクトを利用しなくても別に良いとして許容
-	// userIds: UserIdValue[]
-	userIds: string[]
+	userIds: UserIdValue[]
 ): Promise<Result<User[], Error>> {
 	const clerk_response = await dependencies.clerkClient.users.getUserList({
-		userId: userIds,
+		userId: userIds.map((userId) => userId.user_id),
 	});
 
 	// 長さが0の場合はエラーと考えられる
@@ -25,9 +24,15 @@ export async function findByUserIds(
 			return err(new Error('User not found'));
 		}
 
+		const user_id_result = newUserIdValue(user.id);
+
+		if (user_id_result.isErr()) {
+			return err(user_id_result.error);
+		}
+
 		// firstName, lastNameは空文字を許容
 		result.push({
-			user_id: user.id,
+			user_id: user_id_result.value,
 			firstName: user.firstName || '',
 			lastName: user.lastName || '',
 		});
