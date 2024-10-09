@@ -1,5 +1,4 @@
 import { ClerkClient } from '@clerk/backend';
-import { type UserIdValue } from '../../domain/UserIdValue';
 import { type User } from '../../domain/User';
 import { err, ok, type Result } from 'neverthrow';
 
