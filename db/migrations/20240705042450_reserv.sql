@@ -4,8 +4,8 @@ CREATE TYPE slot AS ENUM ('first', 'second', 'third', 'fourth');
 CREATE TYPE status AS ENUM ('reserved', 'disabled');
 
 CREATE TABLE room (
-  room_uuid UUID PRIMARY KEY NOT NULL,
-  name TEXT NOT NULL NOT NULL,
+  room_uuid UUID PRIMARY KEY,
+  name TEXT NOT NULL,
   UNIQUE (name)
 );
 
@@ -18,7 +18,7 @@ CREATE TABLE reservation (
 -- 直和を表現するための苦肉の策
 -- https://qiita.com/nunukim/items/49ad482544da0f622ec4
 CREATE TABLE reservation_or_disabled (
-  rord_uuid UUID PRIMARY KEY NOT NULL,
+  rord_uuid UUID PRIMARY KEY,
   room_uuid UUID NOT NULL,
   status status NOT NULL,
   reservation_uuid UUID,
