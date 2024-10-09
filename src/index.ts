@@ -207,11 +207,20 @@ app.post(
 			return ctx.json({ message: 'Failed to fetch room' }, 500);
 		}
 
+		// 予約が存在しないかを確認
+		const result_1 = await existsReservationByDateSlotRoomId({ pool }, room_uuid_result.value, date_result.value, slot_result.value);
+		if (result_1.isErr()) {
+			return ctx.json({ message: 'Failed to fetch reservation' }, 500);
+		}
+		if (result_1.value) {
+			return ctx.json({ message: 'すでに予約が埋まっています。' }, 400);
+		}
+
 		// uuidを作成
 		const uuid = createUuidValue();
 
-		const result = await createDisabled({ pool }, uuid, slot_result.value, date_result.value, room_uuid_result.value);
-		if (result.isErr()) {
+		const result_2 = await createDisabled({ pool }, uuid, slot_result.value, date_result.value, room_uuid_result.value);
+		if (result_2.isErr()) {
 			return ctx.json({ message: 'Failed to create' }, 500);
 		}
 
