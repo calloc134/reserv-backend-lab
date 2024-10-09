@@ -13,7 +13,7 @@ import { newUserIdValue } from '../../domain/UserIdValue';
 export async function findReservationByRordIdForDelete(
 	dependencies: { pool: Pool },
 	rord_uuid: UuidValue
-): Promise<Result<ReservationOrDisabledForDelete | null, Error>> {
+): Promise<Result<ReservationOrDisabledForDelete, Error>> {
 	const { pool } = dependencies;
 
 	const sql_response = await pool.query<{ status: 'reserved' | 'disabled'; date: Date; user_id: string | null }>(

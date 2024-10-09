@@ -16,6 +16,9 @@ export async function deleteReservationByRordId(dependencies: { pool: Pool }, ro
 				sql` DELETE FROM reservation USING reservation_or_disabled WHERE reservation.reservation_uuid = reservation_or_disabled.reservation_uuid AND reservation_or_disabled.rord_uuid = ${rord_uuid.uuid}::uuid RETURNING rord_uuid;`
 			);
 
+			// cascadeなのでreservationも消える
+			// このやり方が好ましいかはわからない。ビジネスロジックがRDBMSに依存しているということになるが、そもそもこういう需要があるために追加された機能である気もする。
+
 			return ok(result);
 		} catch (e) {
 			return err(e as Error);
