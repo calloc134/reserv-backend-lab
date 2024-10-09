@@ -159,8 +159,7 @@ app.get(
 	}
 );
 
-// 無効にする日時の設定
-// disabled予定を4つ挿入している
+// 無効にする日時と部屋を指定
 app.post(
 	'/rooms/to-disable/',
 	vValidator(
@@ -230,6 +229,7 @@ app.post(
 	}
 );
 
+// 開始日時から終了日時までのすべての予約を取得
 app.get(
 	'/reservations/start_date/:start_date/end_date/:end_date/',
 	vValidator('param', object({ start_date: string(), end_date: string() }), (result, ctx) => {
@@ -296,10 +296,6 @@ app.get(
 	`
 		);
 
-		// if (result.rows.length === 0) {
-		// 	return ctx.json({ message: 'No reservations' }, 404);
-		// }
-
 		const response: ReservationResponse[] = [];
 
 		const users = await clerkClient.users.getUserList({
@@ -344,6 +340,7 @@ app.get(
 	}
 );
 
+// 開始日時から終了日時までの自分の予約を取得
 app.get(
 	'/reservations/start_date/:start_date/end_date/:end_date/my-reservations/',
 	vValidator('param', object({ start_date: string(), end_date: string() }), (result, ctx) => {
@@ -457,6 +454,7 @@ app.get(
 	}
 );
 
+// 予約の作成
 app.post(
 	'/reservations/',
 	vValidator(
@@ -570,6 +568,7 @@ app.post(
 	}
 );
 
+// 予約をキャンセル
 app.delete(
 	'/reservations/:rord_uuid/',
 	vValidator('param', object({ rord_uuid: string() }), (result, ctx) => {
