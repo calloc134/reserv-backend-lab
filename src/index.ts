@@ -5,10 +5,15 @@ import { Pool } from '@neondatabase/serverless';
 import { sql } from '@ts-safeql/sql-tag';
 import { Hono } from 'hono';
 // sql呼び出しでエラーが出たら素直にthrowする
-import { ok, err, Result } from 'neverthrow';
-import { uuidv7 } from 'uuidv7';
 import { object, string } from 'valibot';
 import { cors } from 'hono/cors';
+
+// 値オブジェクトのimport
+import { convertToDate } from './utils/convertToDate';
+import { convertFromDate } from './utils/convertFromDate';
+import { newUuidValue, createUuidValue } from './domain/UuidValue';
+import { type slot, newSlotValue } from './domain/SlotValue';
+import { newUserIdValue } from './domain/UserIdValue';
 
 // 予約システム
 // ユーザは一週間に一回予約が可能
@@ -18,82 +23,6 @@ import { cors } from 'hono/cors';
 // - 自分が一週間以内に予約していれば不可
 // 予約解除は
 // - 予約が三日以上先であれば可能
-
-type NameValue = {
-	name: string;
-};
-
-function newNameValue(name: string): Result<NameValue, Error> {
-	if (name.length < 3) {
-		return err(new Error('Name must be at least 3 characters long'));
-	}
-
-	if (name.length > 20) {
-		return err(new Error('Name must be at most 20 characters long'));
-	}
-
-	return ok({ name });
-}
-
-type UserIdValue = {
-	user_id: string;
-};
-
-function newUserIdValue(user_id: string): Result<UserIdValue, Error> {
-	const userIdRegex = new RegExp(/^user_[A-Za-z0-9]+$/);
-	if (!userIdRegex.test(user_id)) {
-		return err(new Error('Invalid user id'));
-	}
-	return ok({ user_id });
-}
-
-type UuidValue = {
-	uuid: string;
-};
-
-function createUuidValue(): UuidValue {
-	const id = uuidv7();
-	return { uuid: id };
-}
-
-function newUuidValue(uuid: string): Result<UuidValue, Error> {
-	const uuidRegex = new RegExp(/^([0-9a-f]{8})-([0-9a-f]{4})-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-	if (!uuidRegex.test(uuid)) {
-		return err(new Error('Invalid UUID'));
-	}
-	return ok({ uuid });
-}
-
-function convertToDate(date: string): Result<Date, Error> {
-	// YYYY/MM/DD
-	const [year, month, day] = date.split('-').map((x) => parseInt(x, 10));
-	if (isNaN(year) || isNaN(month) || isNaN(day)) {
-		return err(new Error('Invalid date'));
-	}
-	return ok(new Date(year, month - 1, day));
-}
-
-function convertFromDate(date: Date): string {
-	const year = date.getFullYear();
-	const month = date.getMonth() + 1;
-	const day = date.getDate();
-	return `${year}-${month}-${day}`;
-}
-
-type slot = 'first' | 'second' | 'third' | 'fourth';
-
-type SlotValue = {
-	slot: slot;
-};
-
-// DateはDate型でなければエラーになるので一旦定義しないことに
-
-function newSlotValue(slot: slot): Result<SlotValue, Error> {
-	if (slot !== 'first' && slot !== 'second' && slot !== 'third' && slot !== 'fourth') {
-		return err(new Error('Slot must be first, second, third or fourth'));
-	}
-	return ok({ slot });
-}
 
 type Variables = {
 	pool: Pool;
