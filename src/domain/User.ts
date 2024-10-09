@@ -1,5 +1,7 @@
+import { UserIdValue } from './UserIdValue';
+
 export type User = {
-	user_id: string;
+	user_id: UserIdValue;
 	firstName: string;
 	lastName: string;
 };
