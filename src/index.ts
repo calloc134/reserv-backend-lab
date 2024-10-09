@@ -9,11 +9,15 @@ import { object, string } from 'valibot';
 import { cors } from 'hono/cors';
 
 // 値オブジェクトのimport
-import { convertToDate } from './utils/convertToDate';
-import { convertFromDate } from './utils/convertFromDate';
 import { newUuidValue, createUuidValue } from './domain/UuidValue';
 import { type slot, newSlotValue } from './domain/SlotValue';
 import { newUserIdValue } from './domain/UserIdValue';
+
+// ユーティリティのimport
+import { isWeekday } from './utils/isWeekday';
+import { getPreviousMonday } from './utils/getPreviousMonday';
+import { convertToDate } from './utils/convertToDate';
+import { convertFromDate } from './utils/convertFromDate';
 
 // 予約システム
 // ユーザは一週間に一回予約が可能
@@ -38,30 +42,6 @@ const app = new Hono<{
 	Bindings: Bindings;
 	Variables: Variables;
 }>();
-
-function getMondayOfThisWeek(today: Date = new Date()): Date {
-	// まず本日の曜日を取得
-	// 今日が平日であれば、前の月曜日から次の金曜日までの予約を取得
-	// 今日が休日であれば、次の月曜日から金曜日までの予約を取得
-	// 月曜さえ取得できれば、あとは+4日すれば金曜日になる
-
-	const day = today.getDay();
-
-	let start_date: Date;
-
-	if (day === 0) {
-		// 日曜日
-		start_date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-	} else if (day === 6) {
-		// 土曜日
-		start_date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
-	} else {
-		// 平日であるため、月曜日を取得
-		start_date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - day + 1);
-	}
-
-	return start_date;
-}
 
 app.use(
 	'*',
@@ -457,10 +437,6 @@ app.get(
 
 		const user = await clerkClient.users.getUser(clerk_user.userId);
 
-		// if (result.rows.length === 0) {
-		// 	return ctx.json({ message: 'No reservations' }, 404);
-		// }
-
 		const response: ReservationResponse[] = [];
 
 		for (const row of result.rows) {
@@ -537,11 +513,11 @@ app.post(
 		}
 
 		// 念の為、平日であることを確認
-		if (date.getDay() === 0 || date.getDay() === 6) {
+		if (!isWeekday(date)) {
 			return ctx.json({ message: 'Invalid date' }, 400);
 		}
 
-		const start_date = getMondayOfThisWeek(date);
+		const start_date = getPreviousMonday(date);
 		const end_date = new Date(start_date.getFullYear(), start_date.getMonth(), start_date.getDate() + 4);
 
 		// 予約が埋まっているか確認
@@ -669,9 +645,6 @@ app.delete(
 		}
 
 		const result_2 = await pool.query<{ rord_uuid: string }>(
-			// sql`
-			// 	DELETE FROM reservation_or_disabled WHERE rord_uuid = ${rord_uuid_result.value.uuid}::uuid RETURNING rord_uuid;
-			// `
 			sql` DELETE FROM reservation USING reservation_or_disabled WHERE reservation.reservation_uuid = reservation_or_disabled.reservation_uuid AND reservation_or_disabled.rord_uuid = ${rord_uuid_result.value.uuid}::uuid RETURNING rord_uuid;`
 		);
 
