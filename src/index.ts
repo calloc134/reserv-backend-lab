@@ -19,6 +19,10 @@ import { getPreviousMonday } from './utils/getPreviousMonday';
 import { convertToDate } from './utils/convertToDate';
 import { convertFromDate } from './utils/convertFromDate';
 
+// DTOのimport
+import { RoomResponse } from './handler/dto/RoomResponse';
+import { ReservationResponse } from './handler/dto/ReservationResponse';
+
 // 予約システム
 // ユーザは一週間に一回予約が可能
 // 予約は平日のみ 1,2,3,4限まで
@@ -80,25 +84,6 @@ app.use('*', async (ctx, next) => {
 
 	await next();
 });
-
-type RoomResponse = {
-	room_uuid: string;
-	name: string;
-};
-
-type ReservationResponse = {
-	rord_uuid: string;
-	user: {
-		user_id: string;
-		name: string;
-	} | null;
-	room: {
-		room_uuid: string;
-		name: string;
-	};
-	slot: slot;
-	date: string;
-};
 
 app.get('/', (ctx) => {
 	return ctx.json({ message: 'Hello, World!' });
