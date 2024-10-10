@@ -9,7 +9,7 @@ import { cors } from 'hono/cors';
 // 値オブジェクトのimport
 import { newUuidValue, createUuidValue } from './domain/UuidValue';
 import { type slot, newSlotValue } from './domain/SlotValue';
-import { newUserIdValue, UserIdValue } from './domain/UserIdValue';
+import { newUserIdValue } from './domain/UserIdValue';
 
 // ユーティリティのimport
 import { isWeekday } from './utils/isWeekday';
@@ -20,19 +20,9 @@ import { convertFromDate } from './utils/convertFromDate';
 // DTOのimport
 import { RoomResponse } from './types/dto/RoomResponse';
 import { ReservationResponse } from './types/dto/ReservationResponse';
-import { findByUserId } from './repositories/user/findByUserId';
-import { findByUserIds } from './repositories/user/findByUserIds';
-import { findRooms } from './repositories/room/findRooms';
-import { findAvailableRooms } from './repositories/room/findAvailableRooms';
-import { existsRoomByUuid } from './repositories/room/existsRoomByUuid';
-import { createDisabled } from './repositories/reservation_or_disabled/createDisabled';
-import { findReservationByDateRange } from './repositories/reservation_or_disabled/findReservationByDateRange';
-import { findReservationByDateRangeUserId } from './repositories/reservation_or_disabled/findReservationByDateRangeUserId';
 import { existsReservationByDateSlotRoomId } from './repositories/reservation_or_disabled/existsReservationByDateSlotRoomId';
 import { existsReservationByDateRangeUserId } from './repositories/reservation_or_disabled/existsReservationByDateRangeUserId';
 import { createReservation } from './repositories/reservation_or_disabled/createReservation';
-import { findReservationByRordIdForDelete } from './repositories/reservation_or_disabled/findReservationByRordIdForDelete';
-import { deleteReservationByRordId } from './repositories/reservation_or_disabled/deleteReservationByRordId';
 import { getRooms } from './usecase/room/getRooms';
 import { getAvailableRooms } from './usecase/room/getAvailableRooms';
 import { toDisable } from './usecase/reservation_or_disabled/toDisable';
@@ -495,7 +485,7 @@ app.delete(
 			return ctx.json({ message: 'Invalid rord_uuid' }, 400);
 		}
 
-		const result = await deleteReservation({ pool }, clerk_user_id_result.value, rord_uuid_result.value)
+		const result = await deleteReservation({ pool }, clerk_user_id_result.value, rord_uuid_result.value);
 		if (result.isErr()) {
 			return ctx.json({ message: result.error.message }, 400);
 		}
