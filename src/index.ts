@@ -33,6 +33,12 @@ import { existsReservationByDateRangeUserId } from './repositories/reservation_o
 import { createReservation } from './repositories/reservation_or_disabled/createReservation';
 import { findReservationByRordIdForDelete } from './repositories/reservation_or_disabled/findReservationByRordIdForDelete';
 import { deleteReservationByRordId } from './repositories/reservation_or_disabled/deleteReservationByRordId';
+import { getRooms } from './usecase/room/getRooms';
+import { getAvailableRooms } from './usecase/room/getAvailableRooms';
+import { toDisable } from './usecase/reservation_or_disabled/toDisable';
+import { getReservationsByDateRange } from './usecase/reservation_or_disabled/getReservationsByDateRange';
+import { getReservationsByDateRangeUserId } from './usecase/reservation_or_disabled/getReservationsByDateRangeUserId';
+import { deleteReservation } from './usecase/reservation_or_disabled/deleteReservation';
 
 // 予約システム
 // ユーザは一週間に一回予約が可能
@@ -102,9 +108,10 @@ app.get('/', (ctx) => {
 app.get('/rooms/', async (ctx) => {
 	const pool = ctx.get('pool');
 
-	const result = await findRooms({ pool });
+	// ユースケース呼び出し
+	const result = await getRooms({ pool });
 	if (result.isErr()) {
-		return ctx.json({ message: 'Failed to fetch rooms' }, 500);
+		return ctx.json({ message: result.error.message }, 500);
 	}
 
 	const response: RoomResponse[] = result.value.map((room) => {
@@ -148,10 +155,10 @@ app.get(
 			return ctx.json({ message: 'Invalid slot' }, 400);
 		}
 
-		const result = await findAvailableRooms({ pool }, date, slot_result.value);
-
+		// ユースケース呼び出し
+		const result = await getAvailableRooms({ pool }, date, slot_result.value);
 		if (result.isErr()) {
-			return ctx.json({ message: 'Failed to fetch rooms' }, 500);
+			return ctx.json({ message: result.error.message }, 500);
 		}
 
 		const response: RoomResponse[] = result.value.map((room) => {
@@ -201,27 +208,10 @@ app.post(
 			return ctx.json({ message: 'Invalid room_uuid' }, 400);
 		}
 
-		// 部屋が存在しているか確認
-		const room_result = await existsRoomByUuid({ pool }, room_uuid_result.value);
-		if (room_result.isErr()) {
-			return ctx.json({ message: 'Failed to fetch room' }, 500);
-		}
-
-		// 予約が存在しないかを確認
-		const result_1 = await existsReservationByDateSlotRoomId({ pool }, room_uuid_result.value, date_result.value, slot_result.value);
-		if (result_1.isErr()) {
-			return ctx.json({ message: 'Failed to fetch reservation' }, 500);
-		}
-		if (result_1.value) {
-			return ctx.json({ message: 'すでに予約が埋まっています。' }, 400);
-		}
-
-		// uuidを作成
-		const uuid = createUuidValue();
-
-		const result_2 = await createDisabled({ pool }, uuid, slot_result.value, date_result.value, room_uuid_result.value);
-		if (result_2.isErr()) {
-			return ctx.json({ message: 'Failed to create' }, 500);
+		// ユースケース呼び出し
+		const result = await toDisable({ pool }, room_uuid_result.value, date_result.value, slot_result.value);
+		if (result.isErr()) {
+			return ctx.json({ message: result.error.message }, 400);
 		}
 
 		return ctx.json({ message: `利用禁止の日時を設定しました: ${convertFromDate(date_result.value)} ${slot_result.value.slot}` });
@@ -252,55 +242,45 @@ app.get(
 		const start_date = start_date_result.value;
 		const end_date = end_date_result.value;
 
-		const result_1 = await findReservationByDateRange({ pool }, start_date, end_date);
-		if (result_1.isErr()) {
-			return ctx.json({ message: 'Failed to fetch reservations' }, 500);
-		}
-
-		// とりあえずここで詰め替えを行う 将来的にリポジトリで行う
-		const user_ids: UserIdValue[] = [];
-		for (const row of result_1.value) {
-			if (row.status === 'reserved' && row.user_id) {
-				user_ids.push(row.user_id);
-			}
-		}
-
-		const users_result = await findByUserIds({ clerkClient }, user_ids);
-		if (users_result.isErr()) {
-			return ctx.json({ message: 'Error on fetching users' }, 500);
+		const result = await getReservationsByDateRange({ pool, clerkClient }, start_date, end_date);
+		if (result.isErr()) {
+			return ctx.json({ message: result.error.message }, 500);
 		}
 
 		const response: ReservationResponse[] = [];
 
-		for (const row of result_1.value) {
-			if (!row.user_id) {
+		const { reservations, users } = result.value;
+
+		for (const reservation of reservations) {
+			if (reservation.user_id === null) {
 				response.push({
-					rord_uuid: row.rord_uuid.uuid,
+					rord_uuid: reservation.rord_uuid.uuid,
 					room: {
-						room_uuid: row.room_uuid.uuid,
-						name: row.room_name.name,
+						room_uuid: reservation.room_uuid.uuid,
+						name: reservation.room_name.name,
 					},
-					slot: row.slot.slot,
-					date: convertFromDate(row.date),
+					slot: reservation.slot.slot,
+					date: convertFromDate(reservation.date),
 					user: null,
 				});
 				continue;
 			}
 
-			const user_id = row.user_id.user_id;
-			const user = users_result.value.find((user) => user.user_id.user_id === user_id);
+			const user_id = reservation.user_id.user_id;
+			const user = users.find((user) => user.user_id.user_id === user_id);
+
 			if (!user) {
 				return ctx.json({ message: 'Error on fetching user' }, 500);
 			}
 
 			response.push({
-				rord_uuid: row.rord_uuid.uuid,
+				rord_uuid: reservation.rord_uuid.uuid,
 				room: {
-					room_uuid: row.room_uuid.uuid,
-					name: row.room_name.name,
+					room_uuid: reservation.room_uuid.uuid,
+					name: reservation.room_name.name,
 				},
-				slot: row.slot.slot,
-				date: convertFromDate(row.date),
+				slot: reservation.slot.slot,
+				date: convertFromDate(reservation.date),
 				user: { user_id: user.user_id.user_id, name: `${user.firstName} ${user.lastName}` },
 			});
 		}
@@ -338,28 +318,39 @@ app.get(
 			return ctx.json({ message: 'Invalid user_id' }, 400);
 		}
 
-		const result = await findReservationByDateRangeUserId({ pool }, clerk_user_id_result.value, start_date, end_date);
-		if (result.isErr()) {
-			return ctx.json({ message: 'Failed to fetch reservations' }, 500);
-		}
-
 		const clerkClient = createClerkClient({
 			secretKey: ctx.env.CLERK_SECRET_KEY,
 			publishableKey: ctx.env.CLERK_PUBLISHABLE_KEY,
 		});
 
-		const user_id_result = newUserIdValue(clerk_user.userId);
-		if (user_id_result.isErr()) {
-			return ctx.json({ message: 'Invalid user_id' }, 400);
-		}
-
-		const user = await findByUserId({ clerkClient }, user_id_result.value);
-		if (user.isErr()) {
-			return ctx.json({ message: 'User not found' }, 404);
+		const result = await getReservationsByDateRangeUserId({ pool, clerkClient }, clerk_user_id_result.value, start_date, end_date);
+		if (result.isErr()) {
+			return ctx.json({ message: result.error.message }, 500);
 		}
 
 		const response: ReservationResponse[] = [];
-		for (const row of result.value) {
+
+		for (const row of result.value.reservations) {
+			if (!row.user_id) {
+				response.push({
+					rord_uuid: row.rord_uuid.uuid,
+					room: {
+						room_uuid: row.room_uuid.uuid,
+						name: row.room_name.name,
+					},
+					slot: row.slot.slot,
+					date: convertFromDate(row.date),
+					user: null,
+				});
+				continue;
+			}
+
+			const user_id = row.user_id.user_id;
+			const user = result.value.users.find((user) => user.user_id.user_id === user_id);
+			if (!user) {
+				return ctx.json({ message: 'Error on fetching user' }, 500);
+			}
+
 			response.push({
 				rord_uuid: row.rord_uuid.uuid,
 				room: {
@@ -368,7 +359,7 @@ app.get(
 				},
 				slot: row.slot.slot,
 				date: convertFromDate(row.date),
-				user: { user_id: user_id_result.value.user_id, name: `${user.value.firstName} ${user.value.lastName}` },
+				user: { user_id: user.user_id.user_id, name: `${user.firstName} ${user.lastName}` },
 			});
 		}
 
@@ -416,6 +407,11 @@ app.post(
 		}
 		const date = date_result.value;
 
+		const clerk_user = getAuth(ctx);
+		if (!clerk_user || !clerk_user.userId) {
+			return ctx.json({ message: 'ログインしていません。' }, 401);
+		}
+
 		// まず、本日より前の日付であればエラー
 		if (date < new Date()) {
 			return ctx.json({ message: '過去・当日の日付は予約できません。' }, 400);
@@ -439,10 +435,6 @@ app.post(
 		}
 
 		// 自分が一週間以内に予約しているか確認
-		const clerk_user = getAuth(ctx);
-		if (!clerk_user || !clerk_user.userId) {
-			return ctx.json({ message: 'ログインしていません。' }, 401);
-		}
 
 		const user_id_result = newUserIdValue(clerk_user.userId);
 		if (user_id_result.isErr()) {
@@ -489,45 +481,23 @@ app.delete(
 	async (ctx) => {
 		const pool = ctx.get('pool');
 
-		const rord_uuid_result = newUuidValue(ctx.req.valid('param').rord_uuid);
-		if (rord_uuid_result.isErr()) {
-			return ctx.json({ message: 'Invalid rord_uuid' }, 400);
-		}
-
-		const result = await findReservationByRordIdForDelete({ pool }, rord_uuid_result.value);
-		if (result.isErr()) {
-			return ctx.json({ message: 'Failed to fetch reservation' }, 500);
-		}
-
-		if (result.value.status !== 'reserved' || result.value.user_id === null) {
-			return ctx.json({ message: '予約ではなく、利用禁止の日時です。' }, 400);
-		}
-
 		const clerk_user = getAuth(ctx);
 		if (!clerk_user || !clerk_user.userId) {
 			return ctx.json({ message: 'ログインしていません。' }, 401);
 		}
-
 		const clerk_user_id_result = newUserIdValue(clerk_user.userId);
 		if (clerk_user_id_result.isErr()) {
 			return ctx.json({ message: 'Invalid user_id' }, 400);
 		}
 
-		if (result.value.user_id.user_id !== clerk_user_id_result.value.user_id) {
-			return ctx.json({ message: '他のユーザの予約はキャンセルできません。' }, 403);
+		const rord_uuid_result = newUuidValue(ctx.req.valid('param').rord_uuid);
+		if (rord_uuid_result.isErr()) {
+			return ctx.json({ message: 'Invalid rord_uuid' }, 400);
 		}
 
-		const date = result.value.date;
-		const now = new Date();
-
-		// 3日以上先でなければキャンセル不可
-		if (date.getTime() - now.getTime() < 3 * 24 * 60 * 60 * 1000) {
-			return ctx.json({ message: 'キャンセルは3日以上先の予約のみ可能です。' }, 400);
-		}
-
-		const result_2 = await deleteReservationByRordId({ pool }, rord_uuid_result.value);
-		if (result_2.isErr()) {
-			return ctx.json({ message: 'Failed to delete reservation' }, 500);
+		const result = await deleteReservation({ pool }, clerk_user_id_result.value, rord_uuid_result.value)
+		if (result.isErr()) {
+			return ctx.json({ message: result.error.message }, 400);
 		}
 
 		return ctx.json({ message: '予約をキャンセルしました。' });

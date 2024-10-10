@@ -11,6 +11,7 @@ export async function findByUserIds(
 ): Promise<Result<User[], Error>> {
 	const clerk_response = await dependencies.clerkClient.users.getUserList({
 		userId: userIds.map((userId) => userId.user_id),
+		limit: 100,
 	});
 
 	// 長さが0の場合はエラーと考えられる
