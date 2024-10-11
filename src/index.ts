@@ -29,6 +29,7 @@ import { toDisable } from './usecase/reservation_or_disabled/toDisable';
 import { getReservationsByDateRange } from './usecase/reservation_or_disabled/getReservationsByDateRange';
 import { getReservationsByDateRangeUserId } from './usecase/reservation_or_disabled/getReservationsByDateRangeUserId';
 import { deleteReservation } from './usecase/reservation_or_disabled/deleteReservation';
+import { postReservation } from './usecase/reservation_or_disabled/postReservation';
 
 // 予約システム
 // ユーザは一週間に一回予約が可能
@@ -378,6 +379,10 @@ app.post(
 	async (ctx) => {
 		const pool = ctx.get('pool');
 		const { room_uuid: raw_room_uuid, slot: raw_slot, date: raw_date } = ctx.req.valid('json');
+		const clerkClient = createClerkClient({
+			secretKey: ctx.env.CLERK_SECRET_KEY,
+			publishableKey: ctx.env.CLERK_PUBLISHABLE_KEY,
+		});
 
 		const room_uuid_result = newUuidValue(raw_room_uuid);
 		if (room_uuid_result.isErr()) {
@@ -401,58 +406,20 @@ app.post(
 		if (!clerk_user || !clerk_user.userId) {
 			return ctx.json({ message: 'ログインしていません。' }, 401);
 		}
-
-		// まず、本日より前の日付であればエラー
-		if (date < new Date()) {
-			return ctx.json({ message: '過去・当日の日付は予約できません。' }, 400);
-		}
-
-		// 念の為、平日であることを確認
-		if (!isWeekday(date)) {
-			return ctx.json({ message: 'Invalid date' }, 400);
-		}
-
-		const start_date = getPreviousMonday(date);
-		const end_date = new Date(start_date.getFullYear(), start_date.getMonth(), start_date.getDate() + 4);
-
-		// 予約が埋まっているか確認
-		const result = await existsReservationByDateSlotRoomId({ pool }, room_uuid_result.value, date, slot_result.value);
-		if (result.isErr()) {
-			return ctx.json({ message: 'Failed to fetch reservation' }, 500);
-		}
-		if (result.value) {
-			return ctx.json({ message: 'すでに予約が埋まっています。' }, 400);
-		}
-
-		// 自分が一週間以内に予約しているか確認
-
-		const user_id_result = newUserIdValue(clerk_user.userId);
-		if (user_id_result.isErr()) {
+		const clerk_user_id_result = newUserIdValue(clerk_user.userId);
+		if (clerk_user_id_result.isErr()) {
 			return ctx.json({ message: 'Invalid user_id' }, 400);
 		}
 
-		const result_2 = await existsReservationByDateRangeUserId({ pool }, user_id_result.value, start_date, end_date);
-		if (result_2.isErr()) {
-			return ctx.json({ message: 'Failed to fetch reservation' }, 500);
-		}
-		if (result_2.value) {
-			return ctx.json({ message: '一週間以内に予約しています。' }, 400);
-		}
-
-		const reservation_or_disabled_uuid = createUuidValue();
-		const reservation_uuid = createUuidValue();
-
-		const result_3 = await createReservation(
-			{ pool },
-			reservation_or_disabled_uuid,
-			reservation_uuid,
-			user_id_result.value,
+		const result = await postReservation(
+			{ pool, clerkClient },
 			room_uuid_result.value,
 			date,
-			slot_result.value
+			slot_result.value,
+			clerk_user_id_result.value
 		);
-		if (result_3.isErr()) {
-			return ctx.json({ message: 'Failed to insert' }, 500);
+		if (result.isErr()) {
+			return ctx.json({ message: result.error.message }, 400);
 		}
 
 		return ctx.json({ message: '予約が完了しました。' });
