@@ -128,17 +128,17 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
--- Name: reservation_or_disabled_date_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX reservation_or_disabled_date_idx ON public.reservation_or_disabled USING btree (date);
-
-
---
 -- Name: reservation_or_disabled_date_slot_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX reservation_or_disabled_date_slot_idx ON public.reservation_or_disabled USING btree (date, slot);
+
+
+--
+-- Name: reservation_or_disabled_reservation_uuid_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX reservation_or_disabled_reservation_uuid_idx ON public.reservation_or_disabled USING btree (reservation_uuid);
 
 
 --
@@ -181,6 +181,5 @@ ALTER TABLE ONLY public.reservation_or_disabled
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20240704144235'),
     ('20240705042450'),
     ('20241013061201');
