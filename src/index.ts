@@ -141,7 +141,7 @@ app.get(
 		}
 		const date = date_result.value;
 
-		const slot_result = newSlotValue(raw_slot as slot);
+		const slot_result = newSlotValue(raw_slot);
 		if (slot_result.isErr()) {
 			return ctx.json({ message: 'Invalid slot' }, 400);
 		}
@@ -189,7 +189,7 @@ app.post(
 			return ctx.json({ message: 'Invalid date' }, 400);
 		}
 
-		const slot_result = newSlotValue(raw_slot as slot);
+		const slot_result = newSlotValue(raw_slot);
 		if (slot_result.isErr()) {
 			return ctx.json({ message: 'Invalid slot' }, 400);
 		}
@@ -389,7 +389,7 @@ app.post(
 			return ctx.json({ message: 'Invalid room_uuid' }, 400);
 		}
 
-		const slot_result = newSlotValue(raw_slot as slot);
+		const slot_result = newSlotValue(raw_slot);
 		if (slot_result.isErr()) {
 			return ctx.json({ message: 'Invalid slot' }, 400);
 		}

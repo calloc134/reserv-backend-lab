@@ -51,7 +51,7 @@ export async function findReservationByDateRangeUserId(
 		room_name: string;
 		status: 'reserved' | 'disabled';
 		date: Date;
-		slot: 'first' | 'second' | 'third' | 'fourth';
+		slot: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
 		user_id: string | null;
 	}>(sql`
     SELECT 

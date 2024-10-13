@@ -44,15 +44,7 @@ export async function findReservationByDateRange(
 ): Promise<Result<ReservationOrDisabledWithRoom[], Error>> {
 	const { pool } = dependencies;
 
-	const sql_response = await pool.query<{
-		rord_uuid: string;
-		room_uuid: string;
-		room_name: string;
-		status: 'reserved' | 'disabled';
-		date: Date;
-		slot: 'first' | 'second' | 'third' | 'fourth';
-		user_id: string | null;
-	}>(sql`
+	const sql_response = await pool.query<{ rord_uuid: string; room_uuid: string; room_name: string; status: 'reserved' | 'disabled'; date: Date; slot: 'first' | 'second' | 'third' | 'fourth' | 'fifth'; user_id: string | null }>(sql`
     SELECT 
         rord.rord_uuid,
         rord.room_uuid,

@@ -22,7 +22,12 @@ export async function createDisabled(
 
 	const throwWrapper = async () => {
 		try {
-			const result = await pool.query<{ rord_uuid: string; slot: 'first' | 'second' | 'third' | 'fourth'; date: Date; room_uuid: string }>(
+			const result = await pool.query<{
+				rord_uuid: string;
+				slot: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
+				date: Date;
+				room_uuid: string;
+			}>(
 				sql`
     INSERT INTO reservation_or_disabled (rord_uuid, slot, date, room_uuid, status) VALUES
         (${rord_uuid.uuid}::uuid, ${slot.slot}::slot, ${date}, ${room_uuid.uuid}::uuid, 'disabled')

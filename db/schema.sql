@@ -17,7 +17,8 @@ CREATE TYPE public.slot AS ENUM (
     'first',
     'second',
     'third',
-    'fourth'
+    'fourth',
+    'fifth'
 );
 
 
@@ -181,4 +182,5 @@ ALTER TABLE ONLY public.reservation_or_disabled
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20240704144235'),
-    ('20240705042450');
+    ('20240705042450'),
+    ('20241013061201');
