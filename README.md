@@ -7,6 +7,9 @@
 詳細は以下からご確認ください。
 [https://zenn.dev/calloc134/articles/c24167f2fb6921](https://zenn.dev/calloc134/articles/c24167f2fb6921)
 
+また、リファクタリングの記録は以下からご確認ください。
+[https://zenn.dev/calloc134/articles/69053b8d1dfe2c](https://zenn.dev/calloc134/articles/69053b8d1dfe2c)
+
 ## 利用技術
 
 - Hono
