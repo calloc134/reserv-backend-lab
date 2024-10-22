@@ -28,9 +28,9 @@ export async function deleteReservation(
 	}
 
 	const now_date = new Date();
-	// 3日以上先でなければキャンセル不可
-	if (reservation_for_delete.value.date.getTime() - now_date.getTime() < 3 * 24 * 60 * 60 * 1000) {
-		return err(new Error('3日以上先の予約のみキャンセル可能です。'));
+	// 24時間以内であればキャンセル不可
+	if (reservation_for_delete.value.date.getTime() - now_date.getTime() < 24 * 60 * 60 * 1000) {
+		return err(new Error('当日の予約はキャンセルできません。'));
 	}
 
 	const delete_reservation_result = await deleteReservationByRordId(dependencies, rord_uuid);
