@@ -17,7 +17,6 @@ export async function deleteReservation(
 	if (reservation_for_delete.isErr()) {
 		return err(new Error('Failed to fetch reservation'));
 	}
-
 	if (reservation_for_delete.value.status !== 'reserved' || reservation_for_delete.value.user_id === null) {
 		return err(new Error('予約ではなく、利用禁止の日時です。'));
 	}
@@ -31,6 +30,7 @@ export async function deleteReservation(
 		return err(new Error('過去の予約はキャンセルできません。'));
 	}
 
+	// 予約を削除
 	const delete_reservation_result = await deleteReservationByRordId(dependencies, rord_uuid);
 	if (delete_reservation_result.isErr()) {
 		return err(new Error('Failed to delete reservation'));

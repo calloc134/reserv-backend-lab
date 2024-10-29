@@ -28,9 +28,6 @@ export async function postReservation(
 		return err(new Error('平日でない日付です。'));
 	}
 
-	const start_date = getPreviousMonday(date);
-	const end_date = new Date(start_date.getFullYear(), start_date.getMonth(), start_date.getDate() + 4);
-
 	// 予約が埋まっているか確認
 	const exist_reservation_result = await existsReservationByDateSlotRoomId(dependencies, room_uuid, date, slot);
 	if (exist_reservation_result.isErr()) {
@@ -39,6 +36,9 @@ export async function postReservation(
 	if (exist_reservation_result.value) {
 		return err(new Error('すでに予約が埋まっています。'));
 	}
+
+	const start_date = getPreviousMonday(date);
+	const end_date = new Date(start_date.getFullYear(), start_date.getMonth(), start_date.getDate() + 4);
 
 	// 一週間以内に予約しているか確認
 	const exists_reservation_by_date_range_user_id_result = await existsReservationByDateRangeUserId(
