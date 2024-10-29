@@ -21,16 +21,14 @@ export async function deleteReservation(
 	if (reservation_for_delete.value.status !== 'reserved' || reservation_for_delete.value.user_id === null) {
 		return err(new Error('予約ではなく、利用禁止の日時です。'));
 	}
-	console.log(reservation_for_delete.value.user_id);
-	console.log(user_id);
 	if (reservation_for_delete.value.user_id.user_id !== user_id.user_id) {
 		return err(new Error('他のユーザの予約はキャンセルできません。'));
 	}
 
 	const now_date = new Date();
-	// 24時間以内であればキャンセル不可
-	if (reservation_for_delete.value.date.getTime() - now_date.getTime() < 24 * 60 * 60 * 1000) {
-		return err(new Error('当日の予約はキャンセルできません。'));
+	// 過去の予約はキャンセルできない
+	if (reservation_for_delete.value.date.getTime() - now_date.getTime() < 0) {
+		return err(new Error('過去の予約はキャンセルできません。'));
 	}
 
 	const delete_reservation_result = await deleteReservationByRordId(dependencies, rord_uuid);
