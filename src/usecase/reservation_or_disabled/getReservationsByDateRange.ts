@@ -12,6 +12,7 @@ export async function getReservationsByDateRange(
 	start: Date,
 	end: Date
 ): Promise<Result<{ reservations: ReservationOrDisabledWithRoom[]; users: User[] }, Error>> {
+	// 予約を取得
 	const reservations_result = await findReservationByDateRange(dependencies, start, end);
 	if (reservations_result.isErr()) {
 		return err(reservations_result.error);
@@ -25,6 +26,7 @@ export async function getReservationsByDateRange(
 		}
 	}
 
+	// 予約に関連するユーザを取得
 	const users_result = await findByUserIds(dependencies, user_ids);
 	if (users_result.isErr()) {
 		return err(users_result.error);
