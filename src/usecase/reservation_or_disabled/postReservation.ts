@@ -17,9 +17,10 @@ export async function postReservation(
 	slot: SlotValue,
 	user_id: UserIdValue
 ): Promise<Result<void, Error>> {
-	// まず、本日より前の日付であればエラー
-	if (date < new Date()) {
-		return err(new Error('過去・当日の日付は予約できません。'));
+	const now_date = new Date();
+	// 過去の日付は予約できない
+	if (date.getTime() - now_date.getTime() < 0) {
+		return err(new Error('過去の日付は予約できません。'));
 	}
 
 	// 念の為、平日であることを確認
