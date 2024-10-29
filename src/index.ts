@@ -7,22 +7,17 @@ import { object, string } from 'valibot';
 import { cors } from 'hono/cors';
 
 // 値オブジェクトのimport
-import { newUuidValue, createUuidValue } from './domain/UuidValue';
+import { newUuidValue } from './domain/UuidValue';
 import { type slot, newSlotValue } from './domain/SlotValue';
 import { newUserIdValue } from './domain/UserIdValue';
 
 // ユーティリティのimport
-import { isWeekday } from './utils/isWeekday';
-import { getPreviousMonday } from './utils/getPreviousMonday';
 import { convertToDate } from './utils/convertToDate';
 import { convertFromDate } from './utils/convertFromDate';
 
 // DTOのimport
 import { RoomResponse } from './types/dto/RoomResponse';
 import { ReservationResponse } from './types/dto/ReservationResponse';
-import { existsReservationByDateSlotRoomId } from './repositories/reservation_or_disabled/existsReservationByDateSlotRoomId';
-import { existsReservationByDateRangeUserId } from './repositories/reservation_or_disabled/existsReservationByDateRangeUserId';
-import { createReservation } from './repositories/reservation_or_disabled/createReservation';
 import { getRooms } from './usecase/room/getRooms';
 import { getAvailableRooms } from './usecase/room/getAvailableRooms';
 import { toDisable } from './usecase/reservation_or_disabled/toDisable';
@@ -238,9 +233,9 @@ app.get(
 			return ctx.json({ message: result.error.message }, 500);
 		}
 
-		const response: ReservationResponse[] = [];
-
 		const { reservations, users } = result.value;
+
+		const response: ReservationResponse[] = [];
 
 		for (const reservation of reservations) {
 			if (reservation.user_id === null) {
@@ -319,9 +314,11 @@ app.get(
 			return ctx.json({ message: result.error.message }, 500);
 		}
 
+		const { reservations, users } = result.value;
+
 		const response: ReservationResponse[] = [];
 
-		for (const row of result.value.reservations) {
+		for (const row of reservations) {
 			if (!row.user_id) {
 				response.push({
 					rord_uuid: row.rord_uuid.uuid,
@@ -337,7 +334,7 @@ app.get(
 			}
 
 			const user_id = row.user_id.user_id;
-			const user = result.value.users.find((user) => user.user_id.user_id === user_id);
+			const user = users.find((user) => user.user_id.user_id === user_id);
 			if (!user) {
 				return ctx.json({ message: 'Error on fetching user' }, 500);
 			}
