@@ -21,8 +21,6 @@ export async function deleteReservation(
 	if (reservation_for_delete.value.status !== 'reserved' || reservation_for_delete.value.user_id === null) {
 		return err(new Error('予約ではなく、利用禁止の日時です。'));
 	}
-	console.log(reservation_for_delete.value.user_id);
-	console.log(user_id);
 	if (reservation_for_delete.value.user_id.user_id !== user_id.user_id) {
 		return err(new Error('他のユーザの予約はキャンセルできません。'));
 	}
