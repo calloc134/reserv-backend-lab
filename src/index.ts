@@ -233,9 +233,9 @@ app.get(
 			return ctx.json({ message: result.error.message }, 500);
 		}
 
-		const response: ReservationResponse[] = [];
-
 		const { reservations, users } = result.value;
+
+		const response: ReservationResponse[] = [];
 
 		for (const reservation of reservations) {
 			if (reservation.user_id === null) {
@@ -314,9 +314,11 @@ app.get(
 			return ctx.json({ message: result.error.message }, 500);
 		}
 
+		const { reservations, users } = result.value;
+
 		const response: ReservationResponse[] = [];
 
-		for (const row of result.value.reservations) {
+		for (const row of reservations) {
 			if (!row.user_id) {
 				response.push({
 					rord_uuid: row.rord_uuid.uuid,
@@ -332,7 +334,7 @@ app.get(
 			}
 
 			const user_id = row.user_id.user_id;
-			const user = result.value.users.find((user) => user.user_id.user_id === user_id);
+			const user = users.find((user) => user.user_id.user_id === user_id);
 			if (!user) {
 				return ctx.json({ message: 'Error on fetching user' }, 500);
 			}
