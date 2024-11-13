@@ -19,9 +19,9 @@ export async function postReservation(
 ): Promise<Result<void, Error>> {
 	const now_date = new Date();
 	// 過去の日付は予約できない
-	if (date.getTime() - now_date.getTime() < 0) {
-		return err(new Error('過去の日付は予約できません。'));
-	}
+	// if (date.getTime() - now_date.getTime() < 0) {
+	// 	return err(new Error('過去の日付は予約できません。'));
+	// }
 
 	// 念の為、平日であることを確認
 	if (!isWeekday(date)) {

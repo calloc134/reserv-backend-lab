@@ -24,11 +24,11 @@ export async function deleteReservation(
 		return err(new Error('他のユーザの予約はキャンセルできません。'));
 	}
 
-	const now_date = new Date();
-	// 過去の予約はキャンセルできない
-	if (reservation_for_delete.value.date.getTime() - now_date.getTime() < 0) {
-		return err(new Error('過去の予約はキャンセルできません。'));
-	}
+	// const now_date = new Date();
+	// // 過去の予約はキャンセルできない
+	// if (reservation_for_delete.value.date.getTime() - now_date.getTime() < 0) {
+	// 	return err(new Error('過去の予約はキャンセルできません。'));
+	// }
 
 	// 予約を削除
 	const delete_reservation_result = await deleteReservationByRordId(dependencies, rord_uuid);
