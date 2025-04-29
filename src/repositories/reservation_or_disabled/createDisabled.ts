@@ -15,14 +15,11 @@ export async function createDisabled(dependencies: { db: Sql }, rord_uuid: UuidV
 
 	const throwWrapper = async () => {
 		try {
-			const rows = await db<{
-				rord_uuid: string;
-				slot: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
-				date: Date;
-				room_uuid: string;
-			}>`
+			const rows = await db<
+				{ rord_uuid: string; slot: 'first' | 'second' | 'third' | 'fourth' | 'fifth'; date: Date; room_uuid: string }[]
+			>`
         INSERT INTO reservation_or_disabled (rord_uuid, slot, date, room_uuid, status)
-        VALUES (${rord_uuid.uuid}, ${slot.slot}, ${date}, ${room_uuid.uuid}, 'disabled')
+        VALUES (${rord_uuid.uuid}::uuid, ${slot.slot}::slot, ${date}, ${room_uuid.uuid}::uuid, 'disabled')
         RETURNING rord_uuid, slot, date, room_uuid;
       `;
 

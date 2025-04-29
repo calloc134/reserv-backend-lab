@@ -11,11 +11,11 @@ export async function deleteReservationByRordId(dependencies: { db: Sql }, rord_
 
 	const throwWrapper = async () => {
 		try {
-			const rows = await db<{ rord_uuid: string }>`
+			const rows = await db<{ rord_uuid: string }[]>`
         DELETE FROM reservation
         USING reservation_or_disabled
         WHERE reservation.reservation_uuid = reservation_or_disabled.reservation_uuid
-          AND reservation_or_disabled.rord_uuid = ${rord_uuid.uuid}
+          AND reservation_or_disabled.rord_uuid = ${rord_uuid.uuid}::uuid
         RETURNING rord_uuid;
       `;
 

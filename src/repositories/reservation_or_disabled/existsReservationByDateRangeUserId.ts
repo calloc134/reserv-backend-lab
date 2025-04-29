@@ -10,7 +10,7 @@ export async function existsReservationByDateRangeUserId(
 ): Promise<Result<boolean, Error>> {
 	const { db } = dependencies;
 
-	const rows = await db<{ count: number }>`
+	const rows = await db<{ count: number }[]>`
     SELECT COUNT(*)::int AS count
     FROM reservation_or_disabled rord
     LEFT JOIN reservation res ON rord.reservation_uuid = res.reservation_uuid

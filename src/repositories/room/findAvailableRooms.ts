@@ -7,11 +7,11 @@ import { SlotValue } from '../../domain/SlotValue';
 export async function findAvailableRooms(dependencies: { db: Sql }, date: Date, slot: SlotValue): Promise<Result<Room[], Error>> {
 	const { db } = dependencies;
 
-	const rows = await db<{ room_uuid: string; name: string }>`
+	const rows = await db<{ room_uuid: string; name: string }[]>`
     SELECT room_uuid, name
     FROM room
     WHERE room_uuid NOT IN (
-      SELECT room_uuid FROM reservation_or_disabled WHERE date = ${date} AND slot = ${slot.slot}
+      SELECT room_uuid FROM reservation_or_disabled WHERE date = ${date} AND slot = ${slot.slot}::slot
     )
     ORDER BY room_uuid;
   `;

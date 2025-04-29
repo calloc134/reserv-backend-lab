@@ -13,15 +13,17 @@ export async function findReservationByDateRange(
 ): Promise<Result<ReservationOrDisabledWithRoom[], Error>> {
 	const { db } = dependencies;
 
-	const rows = await db<{
-		rord_uuid: string;
-		room_uuid: string;
-		room_name: string;
-		status: 'reserved' | 'disabled';
-		date: Date;
-		slot: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
-		user_id: string | null;
-	}>`
+	const rows = await db<
+		{
+			rord_uuid: string;
+			room_uuid: string;
+			room_name: string;
+			status: 'reserved' | 'disabled';
+			date: Date;
+			slot: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
+			user_id: string | null;
+		}[]
+	>`
     SELECT
       rord.rord_uuid,
       rord.room_uuid,

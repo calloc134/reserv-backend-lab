@@ -16,10 +16,10 @@ export async function existsReservationByDateSlotRoomId(
 	slot: SlotValue
 ): Promise<Result<boolean, Error>> {
 	const { db } = dependencies;
-	const rows = await db<{ count: number }>`
+	const rows = await db<{ count: number }[]>`
     SELECT COUNT(*)::int AS count
     FROM reservation_or_disabled
-    WHERE room_uuid = ${room_uuid.uuid} AND date = ${date} AND slot = ${slot.slot};
+    WHERE room_uuid = ${room_uuid.uuid}::uuid AND date = ${date} AND slot = ${slot.slot}::slot;
   `;
 	if (rows[0].count === 0) {
 		return ok(false);

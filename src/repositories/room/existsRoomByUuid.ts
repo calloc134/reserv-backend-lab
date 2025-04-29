@@ -4,8 +4,8 @@ import { Sql } from 'postgres';
 
 export async function existsRoomByUuid(dependencies: { db: Sql }, room_uuid: UuidValue): Promise<Result<boolean, Error>> {
 	const { db } = dependencies;
-	const rows = await db<{ count: number }>`
-    SELECT COUNT(*)::int AS count FROM room WHERE room_uuid = ${room_uuid.uuid};
+	const rows = await db<{ count: number }[]>`
+    SELECT COUNT(*)::int AS count FROM room WHERE room_uuid = ${room_uuid.uuid}::uuid;
   `;
 
 	const count = rows[0].count;
