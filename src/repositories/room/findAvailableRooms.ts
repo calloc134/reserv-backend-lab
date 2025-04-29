@@ -1,22 +1,24 @@
-import { Pool } from '@neondatabase/serverless';
+import { Sql } from 'postgres';
 import { Room } from '../../domain/Room';
-import { sql } from '@ts-safeql/sql-tag';
 import { err, ok, Result } from 'neverthrow';
 import { newUuidValue } from '../../domain/UuidValue';
 import { SlotValue } from '../../domain/SlotValue';
 
-export async function findAvailableRooms(dependencies: { pool: Pool }, date: Date, slot: SlotValue): Promise<Result<Room[], Error>> {
-	const { pool } = dependencies;
+export async function findAvailableRooms(dependencies: { db: Sql }, date: Date, slot: SlotValue): Promise<Result<Room[], Error>> {
+	const { db } = dependencies;
 
-	const sql_response = await pool.query<{ room_uuid: string; name: string }>(sql`
-        SELECT room_uuid, name FROM room WHERE room_uuid NOT IN (
-            SELECT room_uuid FROM reservation_or_disabled WHERE date = ${date} AND slot = ${slot.slot}::slot 
-        ) ORDER BY room_uuid;
-    `);
+	const rows = await db<{ room_uuid: string; name: string }>`
+    SELECT room_uuid, name
+    FROM room
+    WHERE room_uuid NOT IN (
+      SELECT room_uuid FROM reservation_or_disabled WHERE date = ${date} AND slot = ${slot.slot}
+    )
+    ORDER BY room_uuid;
+  `;
 
 	const result: Room[] = [];
 
-	for (const row of sql_response.rows) {
+	for (const row of rows) {
 		const uuid_result = newUuidValue(row.room_uuid);
 
 		if (uuid_result.isErr()) {

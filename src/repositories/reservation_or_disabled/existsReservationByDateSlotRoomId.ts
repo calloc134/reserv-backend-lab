@@ -1,7 +1,6 @@
 import { Result, err, ok } from 'neverthrow';
 import { UuidValue } from '../../domain/UuidValue';
-import { Pool } from '@neondatabase/serverless';
-import { sql } from '@ts-safeql/sql-tag';
+import { Sql } from 'postgres';
 
 import { SlotValue } from '../../domain/SlotValue';
 
@@ -11,20 +10,20 @@ import { SlotValue } from '../../domain/SlotValue';
 // );
 
 export async function existsReservationByDateSlotRoomId(
-	dependencies: { pool: Pool },
+	dependencies: { db: Sql },
 	room_uuid: UuidValue,
 	date: Date,
 	slot: SlotValue
 ): Promise<Result<boolean, Error>> {
-	const { pool } = dependencies;
-
-	const sql_response = await pool.query<{ count: number }>(sql`
-        SELECT COUNT(*)::int FROM reservation_or_disabled WHERE room_uuid = ${room_uuid.uuid}::uuid AND date = ${date} AND slot = ${slot.slot}::slot;
-    `);
-
-	if (sql_response.rows[0].count === 0) {
+	const { db } = dependencies;
+	const rows = await db<{ count: number }>`
+    SELECT COUNT(*)::int AS count
+    FROM reservation_or_disabled
+    WHERE room_uuid = ${room_uuid.uuid} AND date = ${date} AND slot = ${slot.slot};
+  `;
+	if (rows[0].count === 0) {
 		return ok(false);
-	} else if (sql_response.rows[0].count === 1) {
+	} else if (rows[0].count === 1) {
 		return ok(true);
 	}
 

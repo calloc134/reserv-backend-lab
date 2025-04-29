@@ -1,4 +1,4 @@
-import { Pool } from '@neondatabase/serverless';
+import { Sql } from 'postgres';
 import { err, ok, Result } from 'neverthrow';
 import { Room } from '../../domain/Room';
 import { existsRoomByUuid } from '../../repositories/room/existsRoomByUuid';
@@ -8,13 +8,14 @@ import { SlotValue } from '../../domain/SlotValue';
 import { createUuidValue, UuidValue } from '../../domain/UuidValue';
 
 export async function toDisable(
-	dependencies: { pool: Pool },
+	dependencies: { db: Sql },
 	room_uuid: UuidValue,
 	date: Date,
 	slot: SlotValue
 ): Promise<Result<void, Error>> {
 	// まず部屋が存在するか確認
-	const exist_room_result = await existsRoomByUuid(dependencies, room_uuid);
+	const { db } = dependencies;
+	const exist_room_result = await existsRoomByUuid({ db }, room_uuid);
 	if (exist_room_result.isErr()) {
 		return err(exist_room_result.error);
 	}
@@ -23,7 +24,7 @@ export async function toDisable(
 	}
 
 	// 予約が存在しないことを確認
-	const exist_reservation_result = await existsReservationByDateSlotRoomId(dependencies, room_uuid, date, slot);
+	const exist_reservation_result = await existsReservationByDateSlotRoomId({ db }, room_uuid, date, slot);
 	if (exist_reservation_result.isErr()) {
 		return err(exist_reservation_result.error);
 	}
@@ -35,7 +36,7 @@ export async function toDisable(
 	const uuid = createUuidValue();
 
 	// 予約を無効化
-	const create_disabled_result = await createDisabled(dependencies, uuid, slot, date, room_uuid);
+	const create_disabled_result = await createDisabled({ db }, uuid, slot, date, room_uuid);
 	if (create_disabled_result.isErr()) {
 		return err(create_disabled_result.error);
 	}

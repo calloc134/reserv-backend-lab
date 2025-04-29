@@ -1,19 +1,18 @@
-import { Pool } from '@neondatabase/serverless';
+import { Sql } from 'postgres';
 import { Room } from '../../domain/Room';
-import { sql } from '@ts-safeql/sql-tag';
 import { err, ok, Result } from 'neverthrow';
 import { newUuidValue } from '../../domain/UuidValue';
 
-export async function findRooms(dependencies: { pool: Pool }): Promise<Result<Room[], Error>> {
-	const { pool } = dependencies;
+export async function findRooms(dependencies: { db: Sql }): Promise<Result<Room[], Error>> {
+	const { db } = dependencies;
 
-	const sql_response = await pool.query<{ room_uuid: string; name: string }>(sql`
-		SELECT * FROM room ORDER BY room_uuid;
-	`);
+	const rows = await db<{ room_uuid: string; name: string }[]>`
+    SELECT * FROM room ORDER BY room_uuid;
+  `;
 
 	const result: Room[] = [];
 
-	for (const row of sql_response.rows) {
+	for (const row of rows) {
 		const uuid_result = newUuidValue(row.room_uuid);
 
 		if (uuid_result.isErr()) {

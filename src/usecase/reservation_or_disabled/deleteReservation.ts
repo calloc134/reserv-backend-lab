@@ -1,4 +1,4 @@
-import type { Sql } from 'postgres';
+import { Sql } from 'postgres';
 import { UuidValue } from '../../domain/UuidValue';
 import { findReservationByRordIdForDelete } from '../../repositories/reservation_or_disabled/findReservationByRordIdForDelete';
 import { err, ok, Result } from 'neverthrow';

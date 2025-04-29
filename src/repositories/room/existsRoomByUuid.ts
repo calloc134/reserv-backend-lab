@@ -1,18 +1,17 @@
 import { Result, err, ok } from 'neverthrow';
 import { UuidValue } from '../../domain/UuidValue';
-import { Pool } from '@neondatabase/serverless';
-import { sql } from '@ts-safeql/sql-tag';
+import { Sql } from 'postgres';
 
-export async function existsRoomByUuid(dependencies: { pool: Pool }, room_uuid: UuidValue): Promise<Result<boolean, Error>> {
-	const { pool } = dependencies;
+export async function existsRoomByUuid(dependencies: { db: Sql }, room_uuid: UuidValue): Promise<Result<boolean, Error>> {
+	const { db } = dependencies;
+	const rows = await db<{ count: number }>`
+    SELECT COUNT(*)::int AS count FROM room WHERE room_uuid = ${room_uuid.uuid};
+  `;
 
-	const sql_response = await pool.query<{ count: number }>(sql`
-        SELECT COUNT(*)::int FROM room WHERE room_uuid = ${room_uuid.uuid}::uuid;
-    `);
-
-	if (sql_response.rows[0].count === 0) {
+	const count = rows[0].count;
+	if (count === 0) {
 		return ok(false);
-	} else if (sql_response.rows[0].count === 1) {
+	} else if (count === 1) {
 		return ok(true);
 	}
 

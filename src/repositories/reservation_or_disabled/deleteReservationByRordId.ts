@@ -3,23 +3,26 @@
 // );
 
 import { Result, err, ok } from 'neverthrow';
-import { Pool } from '@neondatabase/serverless';
-import { sql } from '@ts-safeql/sql-tag';
+import { Sql } from 'postgres';
 import { UuidValue } from '../../domain/UuidValue';
 
-export async function deleteReservationByRordId(dependencies: { pool: Pool }, rord_uuid: UuidValue): Promise<Result<void, Error>> {
-	const { pool } = dependencies;
+export async function deleteReservationByRordId(dependencies: { db: Sql }, rord_uuid: UuidValue): Promise<Result<void, Error>> {
+	const { db } = dependencies;
 
 	const throwWrapper = async () => {
 		try {
-			const result = await pool.query<{ rord_uuid: string }>(
-				sql` DELETE FROM reservation USING reservation_or_disabled WHERE reservation.reservation_uuid = reservation_or_disabled.reservation_uuid AND reservation_or_disabled.rord_uuid = ${rord_uuid.uuid}::uuid RETURNING rord_uuid;`
-			);
+			const rows = await db<{ rord_uuid: string }>`
+        DELETE FROM reservation
+        USING reservation_or_disabled
+        WHERE reservation.reservation_uuid = reservation_or_disabled.reservation_uuid
+          AND reservation_or_disabled.rord_uuid = ${rord_uuid.uuid}
+        RETURNING rord_uuid;
+      `;
 
 			// cascadeなのでreservationも消える
 			// このやり方が好ましいかはわからない。ビジネスロジックがRDBMSに依存しているということになるが、そもそもこういう需要があるために追加された機能である気もする。
 
-			return ok(result);
+			return ok(rows);
 		} catch (e) {
 			return err(e as Error);
 		}
@@ -30,7 +33,7 @@ export async function deleteReservationByRordId(dependencies: { pool: Pool }, ro
 	if (result.isErr()) {
 		return result;
 	}
-	if (result.value.rows.length !== 1) {
+	if (result.value.length !== 1) {
 		return err(new Error('Unexpected count'));
 	}
 
