@@ -1,4 +1,4 @@
-import { Pool } from '@neondatabase/serverless';
+import { Sql } from 'postgres';
 import { err, ok, Result } from 'neverthrow';
 import { ReservationOrDisabledWithRoom } from '../../domain/ReservationOrDisabledWithRoom';
 import { findReservationByDateRange } from '../../repositories/reservation_or_disabled/findReservationByDateRange';
@@ -9,13 +9,14 @@ import { User } from '../../domain/User';
 import { findReservationByDateRangeUserId } from '../../repositories/reservation_or_disabled/findReservationByDateRangeUserId';
 
 export async function getReservationsByDateRangeUserId(
-	dependencies: { pool: Pool; clerkClient: ClerkClient },
+	dependencies: { db: Sql; clerkClient: ClerkClient },
 	user_id: UserIdValue,
 	start: Date,
 	end: Date
 ): Promise<Result<{ reservations: ReservationOrDisabledWithRoom[]; users: User[] }, Error>> {
 	// 予約を取得
-	const reservations_result = await findReservationByDateRangeUserId(dependencies, user_id, start, end);
+	const { db, clerkClient } = dependencies;
+	const reservations_result = await findReservationByDateRangeUserId({ db }, user_id, start, end);
 	if (reservations_result.isErr()) {
 		return err(reservations_result.error);
 	}
@@ -29,7 +30,7 @@ export async function getReservationsByDateRangeUserId(
 	}
 
 	// 予約に関連するユーザを取得
-	const users_result = await findByUserIds(dependencies, user_ids);
+	const users_result = await findByUserIds({ clerkClient }, user_ids);
 	if (users_result.isErr()) {
 		return err(users_result.error);
 	}

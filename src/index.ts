@@ -1,7 +1,7 @@
 import { clerkMiddleware, getAuth } from '@hono/clerk-auth';
 import { createClerkClient } from '@clerk/backend';
 import { vValidator } from '@hono/valibot-validator';
-import { Pool } from '@neondatabase/serverless';
+import Postgres, { type Sql } from 'postgres';
 import { Hono } from 'hono';
 import { object, string } from 'valibot';
 import { cors } from 'hono/cors';
@@ -36,7 +36,7 @@ import { postReservation } from './usecase/reservation_or_disabled/postReservati
 // - 予約が三日以上先であれば可能
 
 type Variables = {
-	pool: Pool;
+	db: Sql;
 };
 
 type Bindings = {
@@ -79,11 +79,9 @@ app.use('*', async (ctx, next) => {
 });
 
 app.use('*', async (ctx, next) => {
-	const pool = new Pool({
-		connectionString: ctx.env.DATABASE_URL,
-	});
+	const db = Postgres(ctx.env.DATABASE_URL);
+	ctx.set('db', db);
 
-	ctx.set('pool', pool);
 	await next();
 });
 
@@ -92,10 +90,8 @@ app.get('/', (ctx) => {
 });
 
 app.get('/rooms/', async (ctx) => {
-	const pool = ctx.get('pool');
-
-	// ユースケース呼び出し
-	const result = await getRooms({ pool });
+	const db = ctx.get('db');
+	const result = await getRooms({ db });
 	if (result.isErr()) {
 		return ctx.json({ message: result.error.message }, 500);
 	}
@@ -127,7 +123,6 @@ app.get(
 	),
 
 	async (ctx) => {
-		const pool = ctx.get('pool');
 		const { date: raw_date, slot: raw_slot } = ctx.req.valid('param');
 
 		const date_result = convertToDate(raw_date);
@@ -142,7 +137,8 @@ app.get(
 		}
 
 		// ユースケース呼び出し
-		const result = await getAvailableRooms({ pool }, date, slot_result.value);
+		const db = ctx.get('db');
+		const result = await getAvailableRooms({ db }, date, slot_result.value);
 		if (result.isErr()) {
 			return ctx.json({ message: result.error.message }, 500);
 		}
@@ -175,7 +171,6 @@ app.post(
 		}
 	),
 	async (ctx) => {
-		const pool = ctx.get('pool');
 		const { date: raw_date, slot: raw_slot } = ctx.req.valid('json');
 
 		// 形式はYYYY/MM/DD
@@ -195,7 +190,8 @@ app.post(
 		}
 
 		// ユースケース呼び出し
-		const result = await toDisable({ pool }, room_uuid_result.value, date_result.value, slot_result.value);
+		const db = ctx.get('db');
+		const result = await toDisable({ db }, room_uuid_result.value, date_result.value, slot_result.value);
 		if (result.isErr()) {
 			return ctx.json({ message: result.error.message }, 400);
 		}
@@ -214,7 +210,6 @@ app.get(
 	}),
 
 	async (ctx) => {
-		const pool = ctx.get('pool');
 		const clerkClient = createClerkClient({
 			secretKey: ctx.env.CLERK_SECRET_KEY,
 			publishableKey: ctx.env.CLERK_PUBLISHABLE_KEY,
@@ -228,7 +223,8 @@ app.get(
 		const start_date = start_date_result.value;
 		const end_date = end_date_result.value;
 
-		const result = await getReservationsByDateRange({ pool, clerkClient }, start_date, end_date);
+		const db = ctx.get('db');
+		const result = await getReservationsByDateRange({ db, clerkClient }, start_date, end_date);
 		if (result.isErr()) {
 			return ctx.json({ message: result.error.message }, 500);
 		}
@@ -284,7 +280,6 @@ app.get(
 		}
 	}),
 	async (ctx) => {
-		const pool = ctx.get('pool');
 		const clerk_user = getAuth(ctx);
 
 		if (!clerk_user || !clerk_user.userId) {
@@ -309,7 +304,8 @@ app.get(
 			publishableKey: ctx.env.CLERK_PUBLISHABLE_KEY,
 		});
 
-		const result = await getReservationsByDateRangeUserId({ pool, clerkClient }, clerk_user_id_result.value, start_date, end_date);
+		const db = ctx.get('db');
+		const result = await getReservationsByDateRangeUserId({ db, clerkClient }, clerk_user_id_result.value, start_date, end_date);
 		if (result.isErr()) {
 			return ctx.json({ message: result.error.message }, 500);
 		}
@@ -374,7 +370,6 @@ app.post(
 	),
 
 	async (ctx) => {
-		const pool = ctx.get('pool');
 		const { room_uuid: raw_room_uuid, slot: raw_slot, date: raw_date } = ctx.req.valid('json');
 		const clerkClient = createClerkClient({
 			secretKey: ctx.env.CLERK_SECRET_KEY,
@@ -408,13 +403,8 @@ app.post(
 			return ctx.json({ message: 'Invalid user_id' }, 400);
 		}
 
-		const result = await postReservation(
-			{ pool, clerkClient },
-			room_uuid_result.value,
-			date,
-			slot_result.value,
-			clerk_user_id_result.value
-		);
+		const db = ctx.get('db');
+		const result = await postReservation({ db, clerkClient }, room_uuid_result.value, date, slot_result.value, clerk_user_id_result.value);
 		if (result.isErr()) {
 			return ctx.json({ message: result.error.message }, 400);
 		}
@@ -433,8 +423,6 @@ app.delete(
 	}),
 
 	async (ctx) => {
-		const pool = ctx.get('pool');
-
 		const clerk_user = getAuth(ctx);
 		if (!clerk_user || !clerk_user.userId) {
 			return ctx.json({ message: 'ログインしていません。' }, 401);
@@ -449,7 +437,8 @@ app.delete(
 			return ctx.json({ message: 'Invalid rord_uuid' }, 400);
 		}
 
-		const result = await deleteReservation({ pool }, clerk_user_id_result.value, rord_uuid_result.value);
+		const db = ctx.get('db');
+		const result = await deleteReservation({ db }, clerk_user_id_result.value, rord_uuid_result.value);
 		if (result.isErr()) {
 			return ctx.json({ message: result.error.message }, 400);
 		}

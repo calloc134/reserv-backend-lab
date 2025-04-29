@@ -1,4 +1,4 @@
-import { Pool } from '@neondatabase/serverless';
+import { Sql } from 'postgres';
 import { ok, err, Result } from 'neverthrow';
 import { createReservation } from '../../repositories/reservation_or_disabled/createReservation';
 import { existsReservationByDateSlotRoomId } from '../../repositories/reservation_or_disabled/existsReservationByDateSlotRoomId';
@@ -11,7 +11,7 @@ import { getPreviousMonday } from '../../utils/getPreviousMonday';
 import { isWeekday } from '../../utils/isWeekday';
 
 export async function postReservation(
-	dependencies: { pool: Pool; clerkClient: ClerkClient },
+	dependencies: { db: Sql; clerkClient: ClerkClient },
 	room_uuid: UuidValue,
 	date: Date,
 	slot: SlotValue,
@@ -19,17 +19,16 @@ export async function postReservation(
 ): Promise<Result<void, Error>> {
 	const now_date = new Date();
 	// 過去の日付は予約できない
-	// if (date.getTime() - now_date.getTime() < 0) {
-	// 	return err(new Error('過去の日付は予約できません。'));
-	// }
-
+	if (date.getTime() - now_date.getTime() < 0) {
+		return err(new Error('過去の日付は予約できません。'));
+	}
 	// 念の為、平日であることを確認
 	if (!isWeekday(date)) {
 		return err(new Error('平日でない日付です。'));
 	}
 
 	// 予約が埋まっているか確認
-	const exist_reservation_result = await existsReservationByDateSlotRoomId(dependencies, room_uuid, date, slot);
+	const exist_reservation_result = await existsReservationByDateSlotRoomId({ db: dependencies.db }, room_uuid, date, slot);
 	if (exist_reservation_result.isErr()) {
 		return err(new Error('Failed to fetch reservation'));
 	}
@@ -42,7 +41,7 @@ export async function postReservation(
 
 	// 一週間以内に予約しているか確認
 	const exists_reservation_by_date_range_user_id_result = await existsReservationByDateRangeUserId(
-		dependencies,
+		{ db: dependencies.db },
 		user_id,
 		start_date,
 		end_date
@@ -60,7 +59,7 @@ export async function postReservation(
 
 	// 予約を作成
 	const create_reservation_result = await createReservation(
-		dependencies,
+		{ db: dependencies.db },
 		reservation_or_disabled_uuid,
 		reservation_uuid,
 		user_id,

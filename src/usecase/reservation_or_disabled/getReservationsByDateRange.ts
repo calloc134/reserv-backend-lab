@@ -1,4 +1,4 @@
-import { Pool } from '@neondatabase/serverless';
+import { Sql } from 'postgres';
 import { err, ok, Result } from 'neverthrow';
 import { ReservationOrDisabledWithRoom } from '../../domain/ReservationOrDisabledWithRoom';
 import { findReservationByDateRange } from '../../repositories/reservation_or_disabled/findReservationByDateRange';
@@ -8,12 +8,13 @@ import { ClerkClient } from '@clerk/backend';
 import { User } from '../../domain/User';
 
 export async function getReservationsByDateRange(
-	dependencies: { pool: Pool; clerkClient: ClerkClient },
+	dependencies: { db: Sql; clerkClient: ClerkClient },
 	start: Date,
 	end: Date
 ): Promise<Result<{ reservations: ReservationOrDisabledWithRoom[]; users: User[] }, Error>> {
 	// 予約を取得
-	const reservations_result = await findReservationByDateRange(dependencies, start, end);
+	const { db, clerkClient } = dependencies;
+	const reservations_result = await findReservationByDateRange({ db }, start, end);
 	if (reservations_result.isErr()) {
 		return err(reservations_result.error);
 	}
@@ -27,7 +28,7 @@ export async function getReservationsByDateRange(
 	}
 
 	// 予約に関連するユーザを取得
-	const users_result = await findByUserIds(dependencies, user_ids);
+	const users_result = await findByUserIds({ clerkClient }, user_ids);
 	if (users_result.isErr()) {
 		return err(users_result.error);
 	}

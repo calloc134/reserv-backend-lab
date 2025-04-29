@@ -7,6 +7,9 @@ export default tseslint.config(
 	...tseslint.configs.recommendedTypeCheckedOnly,
 	safeql.configs.connections({
 		databaseUrl: 'postgresql://postgres@localhost:5432/reserv-keion?sslmode=disable',
-		targets: [{ wrapper: 'pool.query' }],
+		targets: [
+			// this will lint syntax that matches "sql`...`"
+			{ tag: 'db', transform: '{type}[]' },
+		],
 	})
 );
