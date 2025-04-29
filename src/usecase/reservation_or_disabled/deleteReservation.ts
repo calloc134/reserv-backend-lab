@@ -1,19 +1,14 @@
-import { Pool } from '@neondatabase/serverless';
+import type { Sql } from 'postgres';
 import { UuidValue } from '../../domain/UuidValue';
 import { findReservationByRordIdForDelete } from '../../repositories/reservation_or_disabled/findReservationByRordIdForDelete';
 import { err, ok, Result } from 'neverthrow';
 import { UserIdValue } from '../../domain/UserIdValue';
 import { deleteReservationByRordId } from '../../repositories/reservation_or_disabled/deleteReservationByRordId';
 
-export async function deleteReservation(
-	dependencies: {
-		pool: Pool;
-	},
-	user_id: UserIdValue,
-	rord_uuid: UuidValue
-): Promise<Result<void, Error>> {
+export async function deleteReservation(dependencies: { db: Sql }, user_id: UserIdValue, rord_uuid: UuidValue) {
 	// まず予約の詳細を取得
-	const reservation_for_delete = await findReservationByRordIdForDelete(dependencies, rord_uuid);
+	const { db } = dependencies;
+	const reservation_for_delete = await findReservationByRordIdForDelete({ db }, rord_uuid);
 	if (reservation_for_delete.isErr()) {
 		return err(new Error('Failed to fetch reservation'));
 	}
@@ -31,7 +26,7 @@ export async function deleteReservation(
 	// }
 
 	// 予約を削除
-	const delete_reservation_result = await deleteReservationByRordId(dependencies, rord_uuid);
+	const delete_reservation_result = await deleteReservationByRordId({ db }, rord_uuid);
 	if (delete_reservation_result.isErr()) {
 		return err(new Error('Failed to delete reservation'));
 	}
