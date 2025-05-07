@@ -40,7 +40,9 @@ type Variables = {
 };
 
 type Bindings = {
-	DATABASE_URL: string;
+	HYPERDRIVE: {
+		connectionString: string;
+	};
 	CLERK_SECRET_KEY: string;
 	CLERK_PUBLISHABLE_KEY: string;
 };
@@ -79,7 +81,8 @@ app.use('*', async (ctx, next) => {
 });
 
 app.use('*', async (ctx, next) => {
-	const db = Postgres(ctx.env.DATABASE_URL);
+	// Hyperdrive バインディング経由でデータベース接続を初期化
+	const db = Postgres(ctx.env.HYPERDRIVE.connectionString);
 	ctx.set('db', db);
 
 	await next();
